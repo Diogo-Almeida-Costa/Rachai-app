@@ -1,0 +1,40 @@
+# --- IDEs e Editores (VS Code / IntelliJ / Eclipse) ---
+.vscode/
+.idea/
+*.swp
+*.bak
+*.tmp
+.settings/
+.classpath
+.project
+
+# --- Sistema Operacional (Windows) ---
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# --- Back-end (Java / Maven) ---
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/*.jar
+backend/*.war
+
+# --- Front-end (Node / React / Vite) ---
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# --- Logs e Arquivos Temporários ---
+*.log
+temp/
+bin/
