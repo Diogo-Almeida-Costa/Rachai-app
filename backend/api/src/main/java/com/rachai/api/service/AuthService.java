@@ -1,19 +1,19 @@
 package com.rachai.api.service;
 
-import com.rachai.api.model.Usuario;
-import com.rachai.api.repository.UsuarioRepository;
+import com.rachai.api.model.User;
+import com.rachai.api.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
-    private final UsuarioRepository usuarioRepository;
+    private final UserRepository usuarioRepository;
 
-    public AuthService(UsuarioRepository usuarioRepository) {
+    public AuthService(UserRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
     }
 
-    public Usuario cadastrar(Usuario user) {
+    public User register(User user) {
         return usuarioRepository.save(user);
     }
 

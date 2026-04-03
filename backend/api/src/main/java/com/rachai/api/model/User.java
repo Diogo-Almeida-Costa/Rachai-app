@@ -8,10 +8,10 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "usuarios")
+@Table(name = "users")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Usuario {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,20 +20,20 @@ public class Usuario {
     private String email;
 
     @Column(nullable = false)
-    private String senha;
+    private String password;
 
-    private String nome;
+    private String name;
 
-    private String fotoPerfilUrl;
+    private String imageUrl;
 
-    private String biografia;
+    private String bio;
 
-    @Column(name = "data_cadastro", updatable = false)
-    private LocalDateTime dataCadastro;
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate(){
-        this.dataCadastro = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 
 }

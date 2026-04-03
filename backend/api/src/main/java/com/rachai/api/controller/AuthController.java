@@ -1,6 +1,6 @@
 package com.rachai.api.controller;
 
-import com.rachai.api.model.Usuario;
+import com.rachai.api.model.User;
 import com.rachai.api.service.AuthService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,8 +15,8 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/cadastro")
-    public Usuario criarConta(@RequestBody Usuario usuario) {
-        return authService.cadastrar(usuario);
+    @PostMapping("/register")
+    public User signUp(@RequestBody User user) {
+        return authService.register(user);
     }
 }
