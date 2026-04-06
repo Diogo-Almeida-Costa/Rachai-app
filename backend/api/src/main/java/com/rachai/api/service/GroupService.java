@@ -15,8 +15,8 @@ public interface GroupService {
     List<Group> getAllGroups();
     Group updateGroup(Long id, Group groupDetails);
     void deleteGroup(Long id);
-    Group addMemberToGroup(Long groupId, Long memberId);
-    Group removeMemberFromGroup(Long groupId, Long memberId);
+    Group addMemberToGroup(Long groupId, User member);
+    Group removeMemberFromGroup(Long groupId, User member);
     List<Group> getGroupsByOwner(User owner);
     List<Group> getGroupsByMember(User member);
 }

@@ -1,3 +1,9 @@
+package com.rachai.api.model;
+
+import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "groups")
 public class Group {
@@ -19,7 +25,6 @@ public class Group {
         joinColumns = @JoinColumn(name = "group_id"), 
         inverseJoinColumns = @JoinColumn(name = "user_id") 
     )
-
     private Set<User> members = new HashSet<>(); 
 
     // Construtor vazio
@@ -28,6 +33,10 @@ public class Group {
     // Getters e setters
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {

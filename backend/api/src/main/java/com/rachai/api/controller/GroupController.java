@@ -22,6 +22,12 @@ public class GroupController {
     @Autowired
     private UserRepository userRepository;
 
+    // TODO: Implementar a autenticação do usuário para recuperarmos o usuário corretamente
+    private User getAuthenticatedUser() {
+        // assume 'user' com ID 1:
+        return userRepository.findById(1L).orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+    }
+
     @PostMapping
     public ResponseEntity<Group> createGroup(@RequestBody Group group) {
         User owner = getAuthenticatedUser();
