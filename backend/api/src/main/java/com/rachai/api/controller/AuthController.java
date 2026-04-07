@@ -4,6 +4,7 @@ import com.rachai.api.model.User;
 import com.rachai.api.service.AuthService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,5 +19,11 @@ public class AuthController {
     @PostMapping("/register")
     public User signUp(@RequestBody User user) {
         return authService.register(user);
+    }
+
+    @PostMapping("/login")
+    public Map<String, String> login(@RequestBody User user) {
+        String token = authService.login(user.getEmail(), user.getPassword());
+        return Map.of("token", token);
     }
 }

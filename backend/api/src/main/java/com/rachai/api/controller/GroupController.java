@@ -7,6 +7,7 @@ import com.rachai.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +26,8 @@ public class GroupController {
     // TODO: Implementar a autenticação do usuário para recuperarmos o usuário corretamente
     private User getAuthenticatedUser() {
         // assume 'user' com ID 1:
-        return userRepository.findById(1L).orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+       return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        //new RuntimeException("Authenticated user not found"));
     }
 
     @PostMapping

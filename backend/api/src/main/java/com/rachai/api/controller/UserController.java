@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.core.Authentication;
+
+
 import java.util.List;
 
 @RestController
@@ -22,14 +25,17 @@ public class UserController {
         return userService.findAll();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<UserProfileDTO> showProfile(@PathVariable Long id) {
-        return userService.findProfileById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileDTO> showProfile(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+
+        return userService.findProfileById(user.getId()).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<UserProfileDTO> update(@PathVariable Long id, @RequestBody UserUpdateDTO updateData) {
-        UserProfileDTO updatedProfile = userService.updateProfile(id, updateData);
+    @PutMapping("/me")
+    public ResponseEntity<UserProfileDTO> update(Authentication authentication, @RequestBody UserUpdateDTO updateData) {
+        User user = (User) authentication.getPrincipal();
+        UserProfileDTO updatedProfile = userService.updateProfile(user.getId(), updateData);
         return ResponseEntity.ok(updatedProfile);
     }
 }

@@ -2,19 +2,31 @@ package com.rachai.api.service;
 
 import com.rachai.api.model.User;
 import com.rachai.api.repository.UserRepository;
+import com.rachai.api.security.JwtService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
-    private final UserRepository usuarioRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    public AuthService(UserRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
+    @Autowired
+    private JwtService jwtService;
+
+    public String login(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!user.getPassword().equals(password)) {
+            throw new RuntimeException("Senha inválida");
+        }
+
+        return jwtService.generateToken(email);
     }
 
     public User register(User user) {
-        return usuarioRepository.save(user);
+        return userRepository.save(user);
     }
-
 }
