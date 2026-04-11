@@ -52,12 +52,8 @@ public class GroupController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Group> updateGroup(@PathVariable Long id, @RequestBody Group groupDetails) {
-        try {
-            Group updatedGroup = groupService.updateGroup(id, groupDetails);
-            return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Group updatedGroup = groupService.updateGroup(id, groupDetails);
+        return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

@@ -1,5 +1,7 @@
 package com.rachai.api.service;
 
+import com.rachai.api.exception.BusinessException;
+import com.rachai.api.exception.ResourceNotFoundException;
 import com.rachai.api.model.User;
 import com.rachai.api.repository.UserRepository;
 import com.rachai.api.security.JwtService;
@@ -17,10 +19,10 @@ public class AuthService {
 
     public String login(String email, String password) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
         if (!user.getPassword().equals(password)) {
-            throw new RuntimeException("Senha inválida");
+            throw new BusinessException("Senha inválida");
         }
 
         return jwtService.generateToken(email);

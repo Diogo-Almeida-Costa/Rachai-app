@@ -1,5 +1,6 @@
 package com.rachai.api.service;
 
+import com.rachai.api.exception.ResourceNotFoundException;
 import com.rachai.api.model.Group;
 import com.rachai.api.model.User;
 import com.rachai.api.repository.GroupRepository;
@@ -42,7 +43,7 @@ public class GroupServiceImpl implements GroupService {
     // Atualiza grupo
     @Override
     public Group updateGroup(Long id, Group groupDetails) {
-        Group group = groupRepository.findById(id).orElseThrow(() -> new RuntimeException("Group not found"));
+        Group group = groupRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
         group.setName(groupDetails.getName());
         group.setDescription(groupDetails.getDescription());
         return groupRepository.save(group);

@@ -2,6 +2,7 @@ package com.rachai.api.service;
 
 import com.rachai.api.dto.UserProfileDTO;
 import com.rachai.api.dto.UserUpdateDTO;
+import com.rachai.api.exception.ResourceNotFoundException;
 import com.rachai.api.model.User;
 import com.rachai.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,7 @@ public class UserService {
     }
 
     public UserProfileDTO updateProfile(Long id, UserUpdateDTO updateData) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
         user.setName(updateData.getName());
         user.setImageUrl(updateData.getImageUrl());
