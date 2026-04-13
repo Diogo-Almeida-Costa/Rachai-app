@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.security.core.Authentication;
 
-
 import java.util.List;
 
 @RestController
 @RequestMapping("api/users")
+@CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
 
     @Autowired
@@ -29,7 +29,8 @@ public class UserController {
     public ResponseEntity<UserProfileDTO> showProfile(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
 
-        return userService.findProfileById(user.getId()).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return userService.findProfileById(user.getId()).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/me")

@@ -3,11 +3,12 @@ package com.rachai.api.controller;
 import com.rachai.api.model.User;
 import com.rachai.api.service.AuthService;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
+
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
 
     private final AuthService authService;
