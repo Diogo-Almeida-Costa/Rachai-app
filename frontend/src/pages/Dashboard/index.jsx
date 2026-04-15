@@ -11,7 +11,7 @@ const Dashboard = () => {
             window.location.href = './login';
         }
 
-        axios.get('http://localhost:8081/api/auth/me', {
+        axios.get('http://localhost:8081/api/users/me', {
             headers: {Authorization: `Bearer ${token}`}
         }).then(response => setUser(response.data)).catch(() => {
             localStorage.removeItem('token');

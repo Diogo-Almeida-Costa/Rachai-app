@@ -26,7 +26,8 @@ public class UserService {
     }
 
     public UserProfileDTO updateProfile(Long id, UserUpdateDTO updateData) {
-        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
         user.setName(updateData.getName());
         user.setImageUrl(updateData.getImageUrl());
@@ -38,4 +39,12 @@ public class UserService {
                 updatedUser.getBio());
     }
 
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    public Optional<UserProfileDTO> findProfileByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(user -> new UserProfileDTO(user.getName(), user.getEmail(), user.getImageUrl(), user.getBio()));
+    }
 }
