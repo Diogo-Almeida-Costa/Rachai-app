@@ -2,8 +2,8 @@ package com.rachai.api.security;
 
 import com.rachai.api.model.User;
 import com.rachai.api.repository.UserRepository;
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;

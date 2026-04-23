@@ -1,6 +1,6 @@
 package com.rachai.api.model;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.Getter; // Use Getter e Setter separados para evitar o bug do @Data
 import lombok.Setter;
 import lombok.AllArgsConstructor;
