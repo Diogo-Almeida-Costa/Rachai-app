@@ -3,11 +3,14 @@ package com.rachai.api.controller;
 import com.rachai.api.model.Debt;
 import com.rachai.api.model.User;
 import com.rachai.api.service.DebtService;
+import com.rachai.api.service.TabscannerService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,6 +20,9 @@ public class DebtController {
 
     @Autowired
     private DebtService debtService;
+
+    @Autowired
+    private TabscannerService tabscannerService;
 
     private User getAuthenticatedUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -56,5 +62,24 @@ public class DebtController {
     public ResponseEntity<Debt> settleDebt(@PathVariable Long debtId) {
         Debt settledDebt = debtService.settleDebt(debtId);
         return new ResponseEntity<>(settledDebt, HttpStatus.OK);
+    }
+    @PostMapping("/process-invoice")
+    public ResponseEntity<?> processInvoice(@RequestParam("file") MultipartFile file) {
+        try {
+            // 1. Chama o módulo do Tabscanner que você acabou de criar
+            String initialResponse = tabscannerService.processReceipt(file);
+            String token = tabscannerService.extractToken(initialResponse);
+
+            Thread.sleep(3000);
+
+            String finalResult = tabscannerService.searchResult(token);
+
+            return ResponseEntity.ok(finalResult); 
+            
+        } catch (Exception e) {
+            // Se der erro na comunicação ou no arquivo, avisamos aqui
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("Erro ao processar recibo: " + e.getMessage());
+        }
     }
 }
