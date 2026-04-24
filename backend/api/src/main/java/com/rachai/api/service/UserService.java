@@ -3,7 +3,9 @@ package com.rachai.api.service;
 import com.rachai.api.dto.UserProfileDTO;
 import com.rachai.api.dto.UserUpdateDTO;
 import com.rachai.api.exception.ResourceNotFoundException;
+import com.rachai.api.model.Friendship;
 import com.rachai.api.model.User;
+import com.rachai.api.repository.FriendshipRepository;
 import com.rachai.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private FriendshipRepository friendshipRepository;
 
     public List<User> findAll() {
         return userRepository.findAll();
@@ -47,4 +52,23 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .map(user -> new UserProfileDTO(user.getName(), user.getEmail(), user.getImageUrl(), user.getBio()));
     }
+
+    public List<User> searchUsers(String query) {
+        return userRepository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query);
+    }
+
+    public void addFriend(User user, Long friendId) {
+        User friend = userRepository.findById(friendId)
+                .orElseThrow(() -> new ResourceNotFoundException("Amigo não encontrado"));
+
+        if (!friendshipRepository.existsByUserAndFriend(user, friend)) {
+            Friendship friendship = new Friendship(null, user, friend);
+            friendshipRepository.save(friendship);
+        }
+    }
+
+    public List<User> listFriends(User user) {
+        return friendshipRepository.findByUser(user).stream().map(Friendship::getFriend).toList();
+    }
+
 }
