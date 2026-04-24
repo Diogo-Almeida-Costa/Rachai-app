@@ -6,8 +6,6 @@ import lombok.*;
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "friendships")
 public class Friendship {
     @Id
@@ -21,5 +19,11 @@ public class Friendship {
     @ManyToOne
     @JoinColumn(name = "friend_id")
     private User friend;
+
+    public Friendship(Long id, User user, User friend){
+        this.id = id;
+        this.user = user;
+        this.friend = friend;
+    }
 
 }

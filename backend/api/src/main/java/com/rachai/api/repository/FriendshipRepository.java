@@ -6,7 +6,7 @@ import com.rachai.api.model.Friendship;
 import java.util.List;
 
 public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
-    List<Friendship> findByUserId(User user);
+    List<Friendship> findByUser(User user);
 
     boolean existsByUserAndFriend(User user, User friend);
 }

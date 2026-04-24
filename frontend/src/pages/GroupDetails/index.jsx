@@ -10,6 +10,8 @@ const GroupDetails = () => {
     const [expenses, setExpenses] = useState([]);
     const [debts, setDebts] = useState([]);
 
+    const [myFriends, setMyFriends] = useState([]);
+
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
     const [user, setUser] = useState(null);
@@ -28,8 +30,14 @@ const GroupDetails = () => {
 
             const resDebts = await axios.get(`http://localhost:8081/api/debts/group/${id}`, {headers});
             setDebts(resDebts.data);
+
+            const resFriends = await axios.get('http://localhost:8081/api/users/Friends', {headers});
+            setMyFriends(resFriends.data);
         } catch (err) {
-            console.error("Erro ao carregar dados", err);
+            if(err.response?.status === 401 || err.response?.status === 403){
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
         }
     };
 
@@ -55,10 +63,22 @@ const GroupDetails = () => {
             await axios.post(`http://localhost:8081/api/debts/calculate/${id}`, {}, {headers});
 
             setDescription('');
+            setAmount('');
             loadData();
             alert("Despesa adicionada com sucesso!");
             } catch (err) {
                 console.error("Erro ao adicionar despesa",err);
+        }
+    };
+
+    const handleAddMember = async (friendId) => {
+        try{
+            const headers = {Authorization: `Baerer ${token}`};
+            await axios.post(`http://localhost:8081/api/groups/${id}/members`, {id: friend}, {headers});
+            loadData();
+            alert("Membro adicionado ao grupo!");
+        } catch(err){
+            alert("Erro ao adicionar membro.");
         }
     };
 
@@ -72,48 +92,50 @@ const GroupDetails = () => {
             <main className="dash-content">
                 <header style={{ marginBottom: '20px' }}>
                     <h2>Painel do Grupo #{id}</h2>
-                    <p>Aqui você gerencia os gastos e vê os acertos.</p>
                 </header>
 
-                {/* Formulário de entrada */}
+                {/* Adicionar Membros Amigos */}
+                <section className="card-item" style={{ width: '100%', cursor: 'default', marginBottom: '20px', textAlign: 'left' }}>
+                    <h4>Convidar Amigos</h4>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+                        {myFriends.length > 0 ? myFriends.map(friend => (
+                            <button 
+                                key={friend.id} 
+                                onClick={() => handleAddMember(friend.id)}
+                                style={{ padding: '5px 10px', borderRadius: '20px', border: '1px solid var(--primary)', cursor: 'pointer' }}
+                            >
+                                + {friend.name}
+                            </button>
+                        )) : <p style={{fontSize: '12px'}}>Adicione amigos no Dashboard primeiro!</p>}
+                    </div>
+                </section>
+
                 <section className="card-item" style={{ width: '100%', cursor: 'default', marginBottom: '20px' }}>
-                    <h4>💸 Novo Gasto</h4>
+                    <h4>Novo Gasto</h4>
                     <form onSubmit={handleAddExpense} style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                        <input 
-                            type="text" 
-                            placeholder="Ex: Pizza, Combustível..." 
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            style={{ flex: 2, padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                        />
-                        <input 
-                            type="number" 
-                            placeholder="Valor R$" 
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                        />
-                        <button type="submit" style={{ padding: '10px 20px', cursor: 'pointer' }}>Lançar</button>
+                        <input type="text" placeholder="Descrição" value={description} onChange={(e) => setDescription(e.target.value)} style={{ flex: 2, padding: '10px' }} />
+                        <input type="number" placeholder="R$" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ flex: 1, padding: '10px' }} />
+                        <button type="submit">Lançar</button>
                     </form>
                 </section>
 
                 <div className="actions-grid">
                     <div className="card-item" style={{ cursor: 'default' }}>
-                        <h4>📝 Histórico</h4>
-                        {expenses.length > 0 ? expenses.map(exp => (
-                            <div key={exp.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
-                                <span>{exp.description}</span> - <strong>R$ {exp.amount.toFixed(2)}</strong>
+                        <h4>Histórico</h4>
+                        {expenses.map(exp => (
+                            <div key={exp.id} className="history-item">
+                                <span>{exp.description}</span><strong>R$ {exp.amount.toFixed(2)}</strong>
                             </div>
-                        )) : <p>Nenhum gasto registrado.</p>}
+                        ))}
                     </div>
 
-                    <div className="card-item" style={{ cursor: 'default', borderLeft: '5px solid #4CAF50' }}>
-                        <h4>🤝 Acerto de Contas</h4>
-                        {debts.length > 0 ? debts.map(debt => (
-                            <div key={debt.id} style={{ padding: '8px 0' }}>
-                                <b>{debt.debtor.name}</b> deve 💸 <b>R$ {debt.amount.toFixed(2)}</b> para <b>{debt.creditor.name}</b>
+                    <div className="card-item debt-card-highlight" style={{ cursor: 'default' }}>
+                        <h4>Acerto de Contas</h4>
+                        {debts.map(debt => (
+                            <div key={debt.id} className="debt-row">
+                                {debt.debtor.name} deve R$ {debt.amount.toFixed(2)} para {debt.creditor.name}
                             </div>
-                        )) : <p>Tudo quitado por enquanto!</p>}
+                        ))}
                     </div>
                 </div>
             </main>
