@@ -109,6 +109,11 @@ public class DebtService {
         return debtRepository.save(debt);
     }
 
+    @Transactional
+    public Debt save(Debt debt){
+        return debtRepository.save(debt);
+    }
+
     private static class UserBalance {
         User user;
         BigDecimal balance;
