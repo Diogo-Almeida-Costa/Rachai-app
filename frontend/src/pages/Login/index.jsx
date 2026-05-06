@@ -1,41 +1,48 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import '../../styles/auth.css';
+import { useNavigate, Link } from 'react-router-dom';
+import api from '../../services/api';
+import styles from './Login.module.css';
 
-const Login = () => {
+export function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
+    async function handleLogin(e) {
         e.preventDefault();
-        try{
-            const response = await axios.post('http://localhost:8081/api/auth/login', {
-                email,
-                password
-            });
+        try {
+            // No seu back-end, o AuthService retorna apenas o Token (String)
+            const response = await api.post('/auth/login', { email, password });
+            
+            // Verificação: Se vier como objeto {token: "..."} ou string pura
+            const token = typeof response.data === 'string' ? response.data : response.data.token;
 
-            localStorage.setItem('token', response.data.token);
-            window.location.href = './dashboard';
+            if (token) {
+                localStorage.setItem('@RachAI:token', token);
+                navigate('/dashboard');
+            }
         } catch (err) {
-            setError(err.response?.data || 'Erro ao realizar login');
+            alert("Falha na autenticação: Verifique e-mail e senha.");
         }
-    };
+    }
 
     return (
-        <div className="auth-container">
-            <form className="auth-card" onSubmit={handleLogin}>
-                <h2>Rach-AI</h2>
-                <p>Realize seu login</p>
-                <input type="email" placeholder="E-mail" onChange={e => setEmail(e.target.value)} required/>
-                <input type="password" placeholder="Senha" onChange={e => setPassword(e.target.value)} required/>
-                {error && <span className="error-msg">{error}</span>}
-                <button type="submit">Entrar</button>
-                <a href="./register">Não tem uma conta? Cadastre-se</a>
-            </form>
+        <div className={styles.container}>
+            <div className={styles.leftSide}>
+                <h1 className={styles.logo}>% RachAI</h1>
+                <p className={styles.slogan}>Sua IA de divisões financeiras.</p>
+            </div>
+            <div className={styles.rightSide}>
+                <form onSubmit={handleLogin} className={styles.formCard}>
+                    <h2>Bem-vindo de volta!</h2>
+                    <input type="email" placeholder="E-mail" onChange={e => setEmail(e.target.value)} required />
+                    <input type="password" placeholder="Senha" onChange={e => setPassword(e.target.value)} required />
+                    <button type="submit" className={styles.btnLogin}>Entrar</button>
+                </form>
+                <p>Não tem conta? <Link to="/register">Cadastre-se</Link></p>
+            </div>
         </div>
     );
-    
-};
+}
 
 export default Login;
