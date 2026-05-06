@@ -31,12 +31,14 @@ public class DebtService {
     @Transactional
     public List<Debt> calculateAndSimplifyDebts(Long groupId) {
         Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
 
         List<Expense> expenses = expenseRepository.findByGroupId(groupId);
         Set<User> members = group.getMembers();
-        
-        if (members.isEmpty()) return Collections.emptyList();
+
+        if (members.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         // Calcular o saldo líquido de cada usuário
         Map<User, BigDecimal> balances = new HashMap<>();
@@ -47,7 +49,7 @@ public class DebtService {
         for (Expense expense : expenses) {
             BigDecimal amount = expense.getAmount();
             BigDecimal share = amount.divide(BigDecimal.valueOf(members.size()), 2, RoundingMode.HALF_UP);
-            
+
             User payer = expense.getPayer();
             balances.put(payer, balances.get(payer).add(amount));
 
@@ -56,15 +58,21 @@ public class DebtService {
             }
         }
 
+        List<Debt> settledDebts = debtRepository.findByGroupIdAndSettled(groupId, true);
+        for (Debt sd : settledDebts) {
+            balances.put(sd.getDebtor(), balances.get(sd.getDebtor()).add(sd.getAmount()));
+            balances.put(sd.getCreditor(), balances.get(sd.getCreditor()).subtract(sd.getAmount()));
+        }
+
         // Separar credores e devedores
         List<UserBalance> creditors = new ArrayList<>();
         List<UserBalance> debtors = new ArrayList<>();
 
         for (Map.Entry<User, BigDecimal> entry : balances.entrySet()) {
             BigDecimal balance = entry.getValue();
-            if (balance.compareTo(BigDecimal.ZERO) > 0) {
+            if (balance.compareTo(new BigDecimal("0.01")) > 0) {
                 creditors.add(new UserBalance(entry.getKey(), balance));
-            } else if (balance.compareTo(BigDecimal.ZERO) < 0) {
+            } else if (balance.compareTo(new BigDecimal("-0.01")) < 0) {
                 debtors.add(new UserBalance(entry.getKey(), balance.abs()));
             }
         }
@@ -83,17 +91,22 @@ public class DebtService {
             debt.setCreditor(creditor.user);
             debt.setAmount(amountToPay);
             debt.setGroup(group);
+            debt.setSettled(false);
             simplifiedDebts.add(debt);
 
             debtor.balance = debtor.balance.subtract(amountToPay);
             creditor.balance = creditor.balance.subtract(amountToPay);
 
-            if (debtor.balance.compareTo(BigDecimal.ZERO) == 0) i++;
-            if (creditor.balance.compareTo(BigDecimal.ZERO) == 0) j++;
+            if (debtor.balance.compareTo(BigDecimal.ZERO) <= 0) {
+                i++;
+            }
+            if (creditor.balance.compareTo(BigDecimal.ZERO) <= 0) {
+                j++;
+            }
         }
 
-        // Salvar as novas dívidas 
-        debtRepository.deleteByGroupId(groupId);
+        // Salvar as novas dívidas
+        debtRepository.deleteByGroupIdAndSettled(groupId, false);
         return debtRepository.saveAll(simplifiedDebts);
     }
 
@@ -104,13 +117,13 @@ public class DebtService {
     @Transactional
     public Debt settleDebt(Long debtId) {
         Debt debt = debtRepository.findById(debtId)
-                .orElseThrow(() -> new ResourceNotFoundException("Debt not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Dívida não encontrada"));
         debt.setSettled(true);
         return debtRepository.save(debt);
     }
 
     @Transactional
-    public Debt save(Debt debt){
+    public Debt save(Debt debt) {
         return debtRepository.save(debt);
     }
 

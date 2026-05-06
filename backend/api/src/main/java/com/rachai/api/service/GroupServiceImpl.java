@@ -43,7 +43,8 @@ public class GroupServiceImpl implements GroupService {
     // Atualiza grupo
     @Override
     public Group updateGroup(Long id, Group groupDetails) {
-        Group group = groupRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
+        Group group = groupRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
         group.setName(groupDetails.getName());
         group.setDescription(groupDetails.getDescription());
         return groupRepository.save(group);
@@ -55,11 +56,13 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.deleteById(id);
     }
 
-    // Adiciona membro ao grupo
+     // Adiciona membro ao grupo
     @Override
     public Group addMemberToGroup(Long groupId, User member) {
-        Group group = groupRepository.findById(groupId).orElseThrow(() -> new RuntimeException("Group not found"));
-        User existingMember = userRepository.findById(member.getId()).orElseThrow(() -> new RuntimeException("Member not found"));
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
+        User existingMember = userRepository.findById(member.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
         group.getMembers().add(existingMember);
         return groupRepository.save(group);
     }
@@ -67,8 +70,10 @@ public class GroupServiceImpl implements GroupService {
     // Remove membro de um grupo
     @Override
     public Group removeMemberFromGroup(Long groupId, User member) {
-        Group group = groupRepository.findById(groupId).orElseThrow(() -> new RuntimeException("Group not found"));
-        User existingMember = userRepository.findById(member.getId()).orElseThrow(() -> new RuntimeException("Member not found"));
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
+        User existingMember = userRepository.findById(member.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
         group.getMembers().remove(existingMember);
         return groupRepository.save(group);
     }
