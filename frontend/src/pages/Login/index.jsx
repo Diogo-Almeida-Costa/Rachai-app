@@ -1,48 +1,83 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
-import styles from './Login.module.css';
+import './Login.css';
 
 export function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const navigate = useNavigate();
 
     async function handleLogin(e) {
         e.preventDefault();
+        setLoading(true);
+        setError('');
         try {
-            // No seu back-end, o AuthService retorna apenas o Token (String)
             const response = await api.post('/auth/login', { email, password });
-            
-            // Verificação: Se vier como objeto {token: "..."} ou string pura
             const token = typeof response.data === 'string' ? response.data : response.data.token;
-
             if (token) {
                 localStorage.setItem('@RachAI:token', token);
                 navigate('/dashboard');
             }
         } catch (err) {
-            alert("Falha na autenticação: Verifique e-mail e senha.");
+            setError('E-mail ou senha incorretos.');
+        } finally {
+            setLoading(false);
         }
     }
 
     return (
-        <div className={styles.container}>
-            <div className={styles.leftSide}>
-                <h1 className={styles.logo}>% RachAI</h1>
-                <p className={styles.slogan}>Sua IA de divisões financeiras.</p>
+        <div className="login-root">
+            <div className="login-left">
+                <div className="login-brand">
+                    <div className="login-logo-mark">%</div>
+                    <span className="login-logo-text">RachAI</span>
+                </div>
+                <p className="login-tagline">Divida despesas<br/>com inteligência.</p>
+                <div className="login-decor">
+                    <div className="decor-circle c1" />
+                    <div className="decor-circle c2" />
+                    <div className="decor-circle c3" />
+                </div>
             </div>
-            <div className={styles.rightSide}>
-                <form onSubmit={handleLogin} className={styles.formCard}>
-                    <h2>Bem-vindo de volta!</h2>
-                    <input type="email" placeholder="E-mail" onChange={e => setEmail(e.target.value)} required />
-                    <input type="password" placeholder="Senha" onChange={e => setPassword(e.target.value)} required />
-                    <button type="submit" className={styles.btnLogin}>Entrar</button>
-                </form>
-                <p>Não tem conta? <Link to="/register">Cadastre-se</Link></p>
+            <div className="login-right">
+                <div className="login-card animate-in">
+                    <h2 className="login-title">Bem-vindo de volta</h2>
+                    <p className="login-sub">Entre na sua conta para continuar</p>
+                    {error && <div className="form-error">{error}</div>}
+                    <form onSubmit={handleLogin} className="login-form">
+                        <div className="field-group">
+                            <label>E-mail</label>
+                            <input
+                                type="email"
+                                placeholder="voce@email.com"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="field-group">
+                            <label>Senha</label>
+                            <input
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <button type="submit" className="btn-primary" disabled={loading}>
+                            {loading ? <span className="spinner" /> : 'Entrar'}
+                        </button>
+                    </form>
+                    <p className="login-footer">
+                        Não tem conta? <Link to="/register">Criar conta</Link>
+                    </p>
+                </div>
             </div>
         </div>
     );
 }
-
 export default Login;

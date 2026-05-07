@@ -1,5 +1,0 @@
-.container { padding: 40px; max-width: 1200px; margin: 0 auto; }
-.split { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 30px; }
-.header { display: flex; justify-content: space-between; align-items: center; }
-.debt { background: var(--bg-card); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; }
-section form input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; background: var(--bg-card); color: white; border: 1px solid #334155; }
