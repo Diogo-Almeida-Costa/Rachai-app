@@ -9,6 +9,8 @@ import java.util.Optional;
 public interface GroupService {
     Group createGroup(Group group, User owner);
 
+    Group createGroupWithMembers(Group group, User owner, List<Long> memberIds);
+
     // Busca grupo por ID
     Optional<Group> getGroupById(Long id);
 

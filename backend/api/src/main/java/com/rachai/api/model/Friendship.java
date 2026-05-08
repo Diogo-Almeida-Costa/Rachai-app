@@ -6,11 +6,13 @@ import lombok.*;
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor 
+@AllArgsConstructor 
 @Table(name = "friendships")
 public class Friendship {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -20,8 +22,7 @@ public class Friendship {
     @JoinColumn(name = "friend_id")
     private User friend;
 
-    public Friendship(Long id, User user, User friend){
-        this.id = id;
+    public Friendship(User user, User friend) {
         this.user = user;
         this.friend = friend;
     }

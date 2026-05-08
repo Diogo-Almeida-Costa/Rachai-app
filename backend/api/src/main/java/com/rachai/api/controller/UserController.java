@@ -1,5 +1,8 @@
 package com.rachai.api.controller;
 
+
+import com.rachai.api.dto.FriendshipDTO;
+import com.rachai.api.service.FriendshipService;
 import com.rachai.api.dto.UserProfileDTO;
 import com.rachai.api.dto.UserUpdateDTO;
 import com.rachai.api.exception.ResourceNotFoundException;
@@ -19,6 +22,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private FriendshipService friendshipService;
 
     @GetMapping
     public List<User> listAll() {
@@ -44,4 +50,17 @@ public class UserController {
 
         return ResponseEntity.ok(updatedProfile);
     }
+
+    // Endpoint dentro de User para adicionar amigo
+    @PostMapping("/{userId}/friends/{friendId}")
+    public ResponseEntity<FriendshipDTO> addFriend(@PathVariable Long userId, @PathVariable Long friendId) {
+        return ResponseEntity.ok(friendshipService.addFriend(userId, friendId));
+    }
+
+    // Endpoint dentro de User para listar amigos
+    @GetMapping("/{userId}/friends")
+    public ResponseEntity<List<FriendshipDTO>> listFriends(@PathVariable Long userId) {
+        return ResponseEntity.ok(friendshipService.listFriends(userId));
+    }
+    
 }

@@ -89,4 +89,27 @@ public class GroupServiceImpl implements GroupService {
     public List<Group> getGroupsByMember(User member) {
         return groupRepository.findByMembersContaining(member);
     }
+
+    @Override
+    public Group createGroupWithMembers(Group group, User owner, List<Long> memberIds) {
+        // 1. Define o dono e adiciona ele mesmo à lista de membros
+        group.setOwner(owner);
+        group.getMembers().add(owner);
+
+        // 2. Processa a lista de IDs sugeridos
+        if (memberIds != null && !memberIds.isEmpty()) {
+            for (Long id : memberIds) {
+                // Evita adicionar o dono novamente se ele estiver na lista de IDs
+                if (!id.equals(owner.getId())) {
+                    userRepository.findById(id).ifPresent(member -> {
+                        group.getMembers().add(member);
+                    });
+                }
+            }
+        }
+
+        // 3. Salva tudo de uma vez. O JPA cuidará de inserir o grupo
+        // e popular a tabela de junção (members) automaticamente.
+        return groupRepository.save(group);
+    }
 }

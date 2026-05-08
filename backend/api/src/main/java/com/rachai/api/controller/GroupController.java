@@ -137,25 +137,36 @@ public class GroupController {
         try {
             User owner = getAuthenticatedUser();
 
+            String name = body.containsKey("name")
+                    ? (String) body.get("name")
+                    : (String) body.get("suggestedName");
+
+            String description = body.containsKey("description")
+                    ? (String) body.get("description")
+                    : (String) body.get("suggestedDescription");
+
+            @SuppressWarnings("unchecked")
+            List<Integer> memberIds = body.containsKey("memberIds")
+                    ? (List<Integer>) body.get("memberIds")
+                    : (List<Integer>) body.get("suggestedMemberIds");
+
             Group group = new Group();
-            group.setName((String) body.get("name"));
-            group.setDescription((String) body.get("description"));
+            group.setName(name);
+            group.setDescription(description);
 
             Group createdGroup = groupService.createGroup(group, owner);
 
-            @SuppressWarnings("unchecked")
-            List<Integer> memberIds = (List<Integer>) body.get("memberIds");
             if (memberIds != null) {
                 for (Integer memberId : memberIds) {
-                    try {
-                        User member = userRepository.findById(Long.valueOf(memberId))
-                                .orElseThrow(() -> new RuntimeException("Membro não encontrado: " + memberId));
-                        groupService.addMemberToGroup(createdGroup.getId(), member);
-                    } catch (RuntimeException ignored) {}
+                    // Busca o usuário — se não existir, ignora e segue para o próximo
+                    userRepository.findById(Long.valueOf(memberId)).ifPresent(member ->
+                        groupService.addMemberToGroup(createdGroup.getId(), member)
+                    );
                 }
             }
 
-            Group finalGroup = groupService.getGroupById(createdGroup.getId()).orElse(createdGroup);
+            Group finalGroup = groupService.getGroupById(createdGroup.getId())
+                    .orElse(createdGroup);
             return new ResponseEntity<>(finalGroup, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
