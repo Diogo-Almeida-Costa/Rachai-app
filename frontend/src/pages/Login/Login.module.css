@@ -1,6 +1,0 @@
-.container { display: flex; height: 100vh; }
-.leftSide { flex: 1; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; padding: 40px; }
-.rightSide { flex: 1; background: white; color: #1e293b; display: flex; justify-content: center; align-items: center; }
-.formCard { width: 100%; max-width: 400px; padding: 20px; }
-.btnLogin { width: 100%; padding: 14px; background: #1e3a8a; color: white; border-radius: 8px; font-weight: 700; margin-top: 10px; }
-.formCard input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
