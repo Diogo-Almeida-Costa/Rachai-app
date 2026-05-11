@@ -4,6 +4,7 @@ import com.rachai.api.model.Debt;
 import com.rachai.api.model.User;
 import com.rachai.api.service.DebtService;
 import com.rachai.api.service.TabscannerService;
+import com.rachai.api.dto.TabscannerResponseDTO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -67,13 +68,16 @@ public class DebtController {
     public ResponseEntity<?> processInvoice(@RequestParam("file") MultipartFile file) {
         try {
             // 1. Chama o módulo do Tabscanner que você acabou de criar
-            String initialResponse = tabscannerService.processReceipt(file);
+            TabscannerResponseDTO initialResponse = tabscannerService.processReceipt(file);
             String token = tabscannerService.extractToken(initialResponse);
 
             Thread.sleep(3000);
 
-            String finalResult = tabscannerService.searchResult(token);
+            TabscannerResponseDTO finalResult = tabscannerService.searchResult(token);
 
+            if(finalResult != null && finalResult.getResult() != null){
+                return ResponseEntity.ok(finalResult.getResult().getLineItems());
+            }
             return ResponseEntity.ok(finalResult); 
             
         } catch (Exception e) {

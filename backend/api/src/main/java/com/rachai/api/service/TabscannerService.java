@@ -13,12 +13,18 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import java.io.IOException;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 
+import com.rachai.api.dto.TabscannerResponseDTO;
 
 
 @Service
@@ -38,7 +44,8 @@ public class TabscannerService {
 
     private final String API_URL = "https://api.tabscanner.com/api/2/process";
 
-    public String processReceipt(MultipartFile file) throws IOException {
+
+    public TabscannerResponseDTO processReceipt(MultipartFile file) throws IOException {
         // Headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -55,45 +62,71 @@ public class TabscannerService {
                 return file.getOriginalFilename();
             }
         };
-        
+
         body.add("file", contentsAsResource);
+        body.add("nearWords", "true");
+        body.add("documentType", "receipt");
+        body.add("isTable", "true");
+        
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
         //  chamada POST
-        ResponseEntity<String> response = restTemplate.postForEntity(API_URL, requestEntity, String.class);
+        ResponseEntity<TabscannerResponseDTO> response = restTemplate.postForEntity(
+        API_URL, 
+        requestEntity, 
+        TabscannerResponseDTO.class // covnersao do JSON
+        );
 
-
-        System.out.println("Resposta Tabscanner: " + response.getBody());
         return response.getBody();
     }
 
-    public String searchResult(String token) {
+    public TabscannerResponseDTO searchResult(String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("apikey", apiKey);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         String urlResult = "https://api.tabscanner.com/api/result/" + token;
 
-        ResponseEntity<String> response = restTemplate.exchange(
+        ResponseEntity<TabscannerResponseDTO> response = restTemplate.exchange(
             urlResult, 
             HttpMethod.GET, 
             entity, 
-            String.class);
-        return response.getBody();
+            TabscannerResponseDTO.class);
+
+        TabscannerResponseDTO dto = response.getBody();
+
+        return dto;
     }
 
-    public String extractToken(String jsonResponse) {
-        try {
-            
-            JsonNode root = objectMapper.readTree(jsonResponse);
-            
-            if (root.has("token")) {
-                return root.get("token").asText();
-            }
-            throw new RuntimeException("Token não encontrado na resposta do Tabscanner");
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao processar JSON: " + e.getMessage());
+    public String extractToken(TabscannerResponseDTO response) {
+        if (response != null && response.getToken() != null){
+            return response.getToken();
         }
+        throw new RuntimeException("Token não encontrado");
+    }
+    
+   
+
+    public void filterResponse(TabscannerResponseDTO dto){
+        if (dto.getResult() == null || dto.getResult().getLineItems() == null) return;
+
+       dto.getResult().getLineItems().forEach(item -> {
+
+        if (item.getQty() == null) {
+            throw new NullPointerException("Quantidade não encontrada no item: " + item.getDesc());
+        }
+
+
+        // pode lançar uma exception, que o handler captura
+        double valor = Double.parseDouble(item.getQty().toString());
+
+        if (valor <= 0) {
+            // personalizada
+            throw new IllegalArgumentException("Quantidade inválida para o item: " + item.getDesc());
+        }
+
+        item.setQty(valor);
+        });
     }
 }
