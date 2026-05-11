@@ -5,6 +5,7 @@ import com.rachai.api.model.User;
 import com.rachai.api.service.DebtService;
 import com.rachai.api.service.TabscannerService;
 import com.rachai.api.dto.TabscannerResponseDTO;
+import com.rachai.api.exception.BusinessException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,12 +39,10 @@ public class DebtController {
         debt.setCreditor(authenticatedUser);
 
         if (debt.getDebtor().getId().equals(authenticatedUser.getId())) {
-
-            return ResponseEntity.badRequest().body("Você não pode criar uma dívida contra si mesmo.");
-
+            throw new BusinessException("Você não pode criar uma dívida contra si mesmo.");
         }
-                
-        Debt newDebt = debtService.save(debt); 
+
+        Debt newDebt = debtService.save(debt);
         return new ResponseEntity<>(newDebt, HttpStatus.CREATED);
     }
 
@@ -64,26 +63,20 @@ public class DebtController {
         Debt settledDebt = debtService.settleDebt(debtId);
         return new ResponseEntity<>(settledDebt, HttpStatus.OK);
     }
+
     @PostMapping("/process-invoice")
-    public ResponseEntity<?> processInvoice(@RequestParam("file") MultipartFile file) {
-        try {
-            // 1. Chama o módulo do Tabscanner que você acabou de criar
-            TabscannerResponseDTO initialResponse = tabscannerService.processReceipt(file);
-            String token = tabscannerService.extractToken(initialResponse);
+    public ResponseEntity<?> processInvoice(@RequestParam("file") MultipartFile file) throws InterruptedException {
+        // 1. Chama o módulo do Tabscanner que você acabou de criar
+        TabscannerResponseDTO initialResponse = tabscannerService.processReceipt(file);
+        String token = tabscannerService.extractToken(initialResponse);
 
-            Thread.sleep(3000);
+        Thread.sleep(3000);
 
-            TabscannerResponseDTO finalResult = tabscannerService.searchResult(token);
+        TabscannerResponseDTO finalResult = tabscannerService.searchResult(token);
 
-            if(finalResult != null && finalResult.getResult() != null){
-                return ResponseEntity.ok(finalResult.getResult().getLineItems());
-            }
-            return ResponseEntity.ok(finalResult); 
-            
-        } catch (Exception e) {
-            // Se der erro na comunicação ou no arquivo, avisamos aqui
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body("Erro ao processar recibo: " + e.getMessage());
+        if (finalResult != null && finalResult.getResult() != null) {
+            return ResponseEntity.ok(finalResult.getResult().getLineItems());
         }
+        return ResponseEntity.ok(finalResult);
     }
 }

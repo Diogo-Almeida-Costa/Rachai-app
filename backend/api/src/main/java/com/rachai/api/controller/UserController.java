@@ -1,6 +1,5 @@
 package com.rachai.api.controller;
 
-
 import com.rachai.api.dto.FriendshipDTO;
 import com.rachai.api.service.FriendshipService;
 import com.rachai.api.dto.UserProfileDTO;
@@ -34,9 +33,9 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserProfileDTO> showProfile(Authentication authentication) {
         String email = authentication.getName();
-
-        return userService.findProfileByEmail(email).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        UserProfileDTO profile = userService.findProfileByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+        return ResponseEntity.ok(profile);
     }
 
     @PutMapping("/me")
@@ -62,5 +61,5 @@ public class UserController {
     public ResponseEntity<List<FriendshipDTO>> listFriends(@PathVariable Long userId) {
         return ResponseEntity.ok(friendshipService.listFriends(userId));
     }
-    
+
 }

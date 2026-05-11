@@ -1,6 +1,7 @@
 package com.rachai.api.controller;
 
 import com.rachai.api.dto.GroupSuggestionDTO;
+import com.rachai.api.exception.ResourceNotFoundException;
 import com.rachai.api.model.Group;
 import com.rachai.api.model.User;
 import com.rachai.api.service.AiGroupSuggestionService;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/groups")
@@ -29,11 +29,8 @@ public class GroupController {
     @Autowired
     private AiGroupSuggestionService aiGroupSuggestionService;
 
-    // TODO: Implementar a autenticação do usuário para recuperarmos o usuário corretamente
     private User getAuthenticatedUser() {
-        // assume 'user' com ID 1:
-       return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        //new RuntimeException("Authenticated user not found"));
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
     @PostMapping
@@ -51,9 +48,9 @@ public class GroupController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Group> getGroupById(@PathVariable Long id) {
-        Optional<Group> group = groupService.getGroupById(id);
-        return group.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Group group = groupService.getGroupById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
+        return new ResponseEntity<>(group, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
@@ -64,34 +61,24 @@ public class GroupController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteGroup(@PathVariable Long id) {
-        try {
-            groupService.deleteGroup(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        groupService.deleteGroup(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PostMapping("/{groupId}/members/{memberId}")
     public ResponseEntity<Group> addMemberToGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
-        try {
-            User member = userRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member not found"));
-            Group updatedGroup = groupService.addMemberToGroup(groupId, member);
-            return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        User member = userRepository.findById(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Membro não encontrado"));
+        Group updatedGroup = groupService.addMemberToGroup(groupId, member);
+        return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
     }
 
     @DeleteMapping("/{groupId}/members/{memberId}")
     public ResponseEntity<Group> removeMemberFromGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
-        try {
-            User member = userRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member not found"));
-            Group updatedGroup = groupService.removeMemberFromGroup(groupId, member);
-            return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        User member = userRepository.findById(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Membro não encontrado"));
+        Group updatedGroup = groupService.removeMemberFromGroup(groupId, member);
+        return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
     }
 
     @GetMapping("/owner")
@@ -115,16 +102,12 @@ public class GroupController {
      */
     @PostMapping("/suggest")
     public ResponseEntity<GroupSuggestionDTO> suggestGroup(@RequestBody(required = false) Map<String, String> body) {
-        try {
-            User currentUser = getAuthenticatedUser();
-            List<Group> userGroups = groupService.getGroupsByMember(currentUser);
-            String context = body != null ? body.get("context") : null;
+        User currentUser = getAuthenticatedUser();
+        List<Group> userGroups = groupService.getGroupsByMember(currentUser);
+        String context = body != null ? body.get("context") : null;
 
-            GroupSuggestionDTO suggestion = aiGroupSuggestionService.suggestGroup(currentUser, userGroups, context);
-            return new ResponseEntity<>(suggestion, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        GroupSuggestionDTO suggestion = aiGroupSuggestionService.suggestGroup(currentUser, userGroups, context);
+        return ResponseEntity.ok(suggestion);
     }
 
     /**
@@ -134,42 +117,36 @@ public class GroupController {
      */
     @PostMapping("/suggest/confirm")
     public ResponseEntity<Group> confirmSuggestedGroup(@RequestBody Map<String, Object> body) {
-        try {
-            User owner = getAuthenticatedUser();
+        User owner = getAuthenticatedUser();
 
-            String name = body.containsKey("name")
-                    ? (String) body.get("name")
-                    : (String) body.get("suggestedName");
+        String name = body.containsKey("name")
+                ? (String) body.get("name")
+                : (String) body.get("suggestedName");
 
-            String description = body.containsKey("description")
-                    ? (String) body.get("description")
-                    : (String) body.get("suggestedDescription");
+        String description = body.containsKey("description")
+                ? (String) body.get("description")
+                : (String) body.get("suggestedDescription");
 
-            @SuppressWarnings("unchecked")
-            List<Integer> memberIds = body.containsKey("memberIds")
-                    ? (List<Integer>) body.get("memberIds")
-                    : (List<Integer>) body.get("suggestedMemberIds");
+        @SuppressWarnings("unchecked")
+        List<Integer> memberIds = body.containsKey("memberIds")
+                ? (List<Integer>) body.get("memberIds")
+                : (List<Integer>) body.get("suggestedMemberIds");
 
-            Group group = new Group();
-            group.setName(name);
-            group.setDescription(description);
+        Group group = new Group();
+        group.setName(name);
+        group.setDescription(description);
 
-            Group createdGroup = groupService.createGroup(group, owner);
+        Group createdGroup = groupService.createGroup(group, owner);
 
-            if (memberIds != null) {
-                for (Integer memberId : memberIds) {
-                    // Busca o usuário — se não existir, ignora e segue para o próximo
-                    userRepository.findById(Long.valueOf(memberId)).ifPresent(member ->
-                        groupService.addMemberToGroup(createdGroup.getId(), member)
-                    );
-                }
+        if (memberIds != null) {
+            for (Integer memberId : memberIds) {
+                userRepository.findById(Long.valueOf(memberId))
+                        .ifPresent(member -> groupService.addMemberToGroup(createdGroup.getId(), member));
             }
-
-            Group finalGroup = groupService.getGroupById(createdGroup.getId())
-                    .orElse(createdGroup);
-            return new ResponseEntity<>(finalGroup, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        Group finalGroup = groupService.getGroupById(createdGroup.getId())
+                .orElse(createdGroup);
+        return new ResponseEntity<>(finalGroup, HttpStatus.CREATED);
     }
 }
