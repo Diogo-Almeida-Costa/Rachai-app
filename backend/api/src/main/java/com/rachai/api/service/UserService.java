@@ -27,7 +27,8 @@ public class UserService {
 
     public Optional<UserProfileDTO> findProfileById(Long id) {
         return userRepository.findById(id)
-                .map(user -> new UserProfileDTO(user.getName(), user.getEmail(), user.getImageUrl(), user.getBio()));
+                .map(user -> new UserProfileDTO(user.getId(), user.getName(), user.getEmail(), user.getImageUrl(),
+                        user.getBio()));
     }
 
     public UserProfileDTO updateProfile(Long id, UserUpdateDTO updateData) {
@@ -40,7 +41,8 @@ public class UserService {
 
         User updatedUser = userRepository.save(user);
 
-        return new UserProfileDTO(updatedUser.getName(), updatedUser.getEmail(), updatedUser.getImageUrl(),
+        return new UserProfileDTO(updatedUser.getId(), updatedUser.getName(), updatedUser.getEmail(),
+                updatedUser.getImageUrl(),
                 updatedUser.getBio());
     }
 
@@ -50,7 +52,8 @@ public class UserService {
 
     public Optional<UserProfileDTO> findProfileByEmail(String email) {
         return userRepository.findByEmail(email)
-                .map(user -> new UserProfileDTO(user.getName(), user.getEmail(), user.getImageUrl(), user.getBio()));
+                .map(user -> new UserProfileDTO(user.getId(), user.getName(), user.getEmail(), user.getImageUrl(),
+                        user.getBio()));
     }
 
     public List<User> searchUsers(String query) {

@@ -29,6 +29,23 @@ public class AuthService {
     }
 
     public User register(User user) {
+
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new BusinessException("Email é obrigatório");
+        }
+
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            throw new BusinessException("Senha é obrigatória");
+        }
+
+        if (user.getPassword().length() < 6) {
+            throw new BusinessException("A senha deve conter pelo menos 6 caracteres");
+        }
+
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new BusinessException("Já existe um usuário com esse email");
+        }
+
         return userRepository.save(user);
     }
 }
