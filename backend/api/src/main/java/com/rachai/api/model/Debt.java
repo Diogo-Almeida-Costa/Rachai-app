@@ -1,19 +1,12 @@
 package com.rachai.api.model;
 
 import javax.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+
 @Entity
 @Table(name = "debts")
-@NoArgsConstructor
-@AllArgsConstructor
 public class Debt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,11 +14,11 @@ public class Debt {
 
     @ManyToOne
     @JoinColumn(name = "debtor_id", nullable = false)
-    private User debtor; // Quem deve
+    private User debtor; 
 
     @ManyToOne
     @JoinColumn(name = "creditor_id", nullable = false)
-    private User creditor; // Quem recebe
+    private User creditor; 
 
     @ManyToOne
     @JoinColumn(name = "group_id", nullable = false)
@@ -40,8 +33,78 @@ public class Debt {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    public Debt() {
+    }
+
+    public Debt(BigDecimal amount, LocalDateTime createdAt, User creditor, User debtor, Group group, Long id) {
+        this.amount = amount;
+        this.createdAt = createdAt;
+        this.creditor = creditor;
+        this.debtor = debtor;
+        this.group = group;
+        this.id = id;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public User getDebtor() {
+        return debtor;
+    }
+
+    public void setDebtor(User debtor) {
+        this.debtor = debtor;
+    }
+
+    public User getCreditor() {
+        return creditor;
+    }
+
+    public void setCreditor(User creditor) {
+        this.creditor = creditor;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public boolean isSettled() {
+        return settled;
+    }
+
+    public void setSettled(boolean settled) {
+        this.settled = settled;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    
 }

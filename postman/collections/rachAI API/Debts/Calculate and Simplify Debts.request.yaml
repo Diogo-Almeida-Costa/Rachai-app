@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{base_url}}/rachai/debts/group/1/calculate"
+method: POST
+order: 1000

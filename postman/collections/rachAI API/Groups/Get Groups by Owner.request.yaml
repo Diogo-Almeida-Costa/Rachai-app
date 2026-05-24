@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{base_url}}/rachai/groups/owner"
+method: GET
+order: 8000

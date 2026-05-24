@@ -18,8 +18,7 @@ public class AuthService {
     private JwtService jwtService;
 
     public String login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
         if (!user.getPassword().equals(password)) {
             throw new BusinessException("Senha inválida");

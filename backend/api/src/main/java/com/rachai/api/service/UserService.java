@@ -1,50 +1,59 @@
 package com.rachai.api.service;
 
 import com.rachai.api.dto.UserProfileDTO;
-import com.rachai.api.dto.UserUpdateDTO;
 import com.rachai.api.exception.ResourceNotFoundException;
 import com.rachai.api.model.User;
 import com.rachai.api.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
-import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @Service
 public class UserService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class) ;
+
     @Autowired
-    private UserRepository userRepository;
+    private UserRepository repository;
 
     public List<User> findAll() {
-        return userRepository.findAll();
+        logger.info("Finding All Users!");
+        return repository.findAll();
     }
 
-    public Optional<UserProfileDTO> findProfileById(Long id) {
-        return userRepository.findById(id)
-                .map(user -> new UserProfileDTO(user.getName(), user.getEmail(), user.getImageUrl(), user.getBio()));
+    public User findProfileById(Long id) {
+        logger.info("Searching One Person by Id");
+        return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No records found for this ID"));
     }
 
-    public UserProfileDTO updateProfile(Long id, UserUpdateDTO updateData) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+    public User updateProfile(String email , User user) {
+        logger.info("Updating the profile with ID: {} and name {} {}" , user.getId() , user.getFirstName(), user.getLastName());
+        User entity = repository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("There's no user with this email"));
 
-        user.setName(updateData.getName());
-        user.setImageUrl(updateData.getImageUrl());
-        user.setBio(updateData.getBio());
+        entity.setFirstName(user.getFirstName());
+        entity.setLastName(user.getLastName());
+        entity.setImageUrl(user.getImageUrl());
+        entity.setBio(user.getBio());
 
-        User updatedUser = userRepository.save(user);
-
-        return new UserProfileDTO(updatedUser.getName(), updatedUser.getEmail(), updatedUser.getImageUrl(),
-                updatedUser.getBio());
+        return repository.save(entity);
     }
 
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
+    public User findByEmail(String email) {
+        logger.info("Searching User with email: {}" , email);
+        return repository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("There's no User with this email"));
     }
 
-    public Optional<UserProfileDTO> findProfileByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .map(user -> new UserProfileDTO(user.getName(), user.getEmail(), user.getImageUrl(), user.getBio()));
+    public UserProfileDTO findProfileByEmail(String email) {
+        logger.info("Searching User's Profile with email: {}" , email);
+
+        User user = repository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("There's no User's Profile with this email"));
+
+        return new UserProfileDTO(user.getFirstName(), user.getLastName(), user.getEmail(), user.getImageUrl(),user.getBio());
     }
 }

@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/rachai/expenses"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+        "description": "Carne para o churrasco",
+        "amount": 150.50,
+        "payerId": 1,
+        "groupId": 1
+    }
+order: 1000

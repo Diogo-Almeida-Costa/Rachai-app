@@ -1,10 +1,9 @@
 package com.rachai.api.controller;
 
 import com.rachai.api.dto.UserProfileDTO;
-import com.rachai.api.dto.UserUpdateDTO;
-import com.rachai.api.exception.ResourceNotFoundException;
 import com.rachai.api.model.User;
 import com.rachai.api.service.UserService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,35 +12,36 @@ import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
+import org.springframework.http.MediaType;
+
 @RestController
-@RequestMapping("api/users")
+@RequestMapping("rachai/users")
 public class UserController {
 
     @Autowired
-    private UserService userService;
+    private UserService service;
 
-    @GetMapping
+    @RequestMapping(method = RequestMethod.GET , produces = MediaType.APPLICATION_JSON_VALUE)
     public List<User> listAll() {
-        return userService.findAll();
+        return service.findAll();
     }
 
-    @GetMapping("/me")
+    @RequestMapping(value = "/me" , method = RequestMethod.PUT , produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<User> update(Authentication authentication, @RequestBody User user) {
+        String email = authentication.getName();
+
+        User updatedProfile = service.updateProfile(email , user);
+
+        return ResponseEntity.ok(updatedProfile);
+    }
+
+
+    @RequestMapping(value = "/me" , method = RequestMethod.GET , produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserProfileDTO> showProfile(Authentication authentication) {
         String email = authentication.getName();
 
-        return userService.findProfileByEmail(email).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/me")
-    public ResponseEntity<UserProfileDTO> update(Authentication authentication, @RequestBody UserUpdateDTO updateData) {
-        String email = authentication.getName();
-
-        User user = userService.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
-
-        UserProfileDTO updatedProfile = userService.updateProfile(user.getId(), updateData);
-
-        return ResponseEntity.ok(updatedProfile);
+        UserProfileDTO myProfile = service.findProfileByEmail(email);
+        
+        return ResponseEntity.ok(myProfile);
     }
 }

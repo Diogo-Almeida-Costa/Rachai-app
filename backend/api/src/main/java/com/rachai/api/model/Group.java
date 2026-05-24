@@ -5,21 +5,23 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "groups")
+@Table(name = "tb_groups")
 public class Group {
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private Long id;
 
+    @Column(name = "name" , nullable = false , length = 80)
     private String name; 
 
+    @Column(length = 300)
     private String description; 
 
     @ManyToOne
     @JoinColumn(name = "owner_id") 
     private User owner;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "group_members",
         joinColumns = @JoinColumn(name = "group_id"), 

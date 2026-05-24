@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/rachai/users/me"
+method: PUT
+body:
+  type: json
+  content: |-
+    {
+        "firstName": "John Updated",
+        "lastName": "Doe",
+        "bio": "New bio here",
+        "imageUrl": "http://example.com/image.png"
+    }
+order: 3000

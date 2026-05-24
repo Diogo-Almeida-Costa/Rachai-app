@@ -22,7 +22,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeRequests()
-                        .antMatchers("/api/auth/**").permitAll()
+                        .antMatchers("/rachai/auth/**").permitAll()
                         .anyRequest().authenticated()
                         .and()
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

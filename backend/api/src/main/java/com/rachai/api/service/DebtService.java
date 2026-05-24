@@ -7,7 +7,9 @@ import com.rachai.api.model.User;
 import com.rachai.api.repository.DebtRepository;
 import com.rachai.api.repository.ExpenseRepository;
 import com.rachai.api.repository.GroupRepository;
+import com.rachai.api.exception.BusinessException;
 import com.rachai.api.exception.ResourceNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class DebtService {
@@ -28,15 +33,17 @@ public class DebtService {
     @Autowired
     private GroupRepository groupRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(DebtService.class);
+
     @Transactional
     public List<Debt> calculateAndSimplifyDebts(Long groupId) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+        logger.info("Calculating debts for Group {}", groupId);
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         List<Expense> expenses = expenseRepository.findByGroupId(groupId);
         Set<User> members = group.getMembers();
         
-        if (members.isEmpty()) return Collections.emptyList();
+        if (members.isEmpty()) throw new BusinessException("Group has no members");
 
         // Calcular o saldo líquido de cada usuário
         Map<User, BigDecimal> balances = new HashMap<>();
@@ -98,13 +105,22 @@ public class DebtService {
     }
 
     public List<Debt> getDebtsByGroup(Long groupId) {
+        logger.info("Searching debts for Group {}", groupId);
+
+        groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
         return debtRepository.findByGroupId(groupId);
     }
 
     @Transactional
     public Debt settleDebt(Long debtId) {
-        Debt debt = debtRepository.findById(debtId)
-                .orElseThrow(() -> new ResourceNotFoundException("Debt not found"));
+        logger.info("Settling Debt {}", debtId);
+        Debt debt = debtRepository.findById(debtId).orElseThrow(() -> new ResourceNotFoundException("Debt not found"));
+
+        if(debt.isSettled()) {
+            throw new BusinessException("Debt already settled");
+        }
+
         debt.setSettled(true);
         return debtRepository.save(debt);
     }

@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{base_url}}/rachai/groups/1/members/2"
+method: DELETE
+order: 7000

@@ -3,7 +3,7 @@ package com.rachai.api.controller;
 import com.rachai.api.model.Group;
 import com.rachai.api.model.User;
 import com.rachai.api.service.GroupService;
-import com.rachai.api.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,94 +11,91 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
+
+import org.springframework.http.MediaType;
 
 @RestController
-@RequestMapping("/api/groups")
+@RequestMapping("/rachai/groups")
 public class GroupController {
 
     @Autowired
     private GroupService groupService;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    // TODO: Implementar a autenticação do usuário para recuperarmos o usuário corretamente
     private User getAuthenticatedUser() {
-        // assume 'user' com ID 1:
        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        //new RuntimeException("Authenticated user not found"));
     }
 
-    @PostMapping
+    @RequestMapping(method = RequestMethod.POST , produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Group> createGroup(@RequestBody Group group) {
+
         User owner = getAuthenticatedUser();
-        Group createdGroup = groupService.createGroup(group, owner);
+
+        Group createdGroup = groupService.createGroup(group, owner.getId());
+
         return new ResponseEntity<>(createdGroup, HttpStatus.CREATED);
     }
 
-    @GetMapping
+    @RequestMapping(method = RequestMethod.GET , produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Group>> getAllGroups() {
+
         List<Group> groups = groupService.getAllGroups();
+
         return new ResponseEntity<>(groups, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
+    @RequestMapping(value = "/{id}" , method = RequestMethod.GET , produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Group> getGroupById(@PathVariable Long id) {
-        Optional<Group> group = groupService.getGroupById(id);
-        return group.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+
+        Group group = groupService.getGroupById(id);
+        
+        return new ResponseEntity<>(group, HttpStatus.OK);
     }
 
-    @PutMapping("/{id}")
+    @RequestMapping(value = "/{id}" , method = RequestMethod.PUT , produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Group> updateGroup(@PathVariable Long id, @RequestBody Group groupDetails) {
+
         Group updatedGroup = groupService.updateGroup(id, groupDetails);
+
         return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}")
+    @RequestMapping(value = "/{id}" , method = RequestMethod.DELETE , produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<HttpStatus> deleteGroup(@PathVariable Long id) {
-        try {
-            groupService.deleteGroup(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        groupService.deleteGroup(id);
+        
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PostMapping("/{groupId}/members/{memberId}")
     public ResponseEntity<Group> addMemberToGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
-        try {
-            User member = userRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member not found"));
-            Group updatedGroup = groupService.addMemberToGroup(groupId, member);
-            return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        Group updatedGroup = groupService.addMemberToGroup(groupId, memberId);
+
+        return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
     }
 
     @DeleteMapping("/{groupId}/members/{memberId}")
     public ResponseEntity<Group> removeMemberFromGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
-        try {
-            User member = userRepository.findById(memberId).orElseThrow(() -> new RuntimeException("Member not found"));
-            Group updatedGroup = groupService.removeMemberFromGroup(groupId, member);
-            return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+
+        Group updatedGroup = groupService.removeMemberFromGroup(groupId, memberId);
+        
+        return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
     }
 
     @GetMapping("/owner")
     public ResponseEntity<List<Group>> getGroupsByOwner() {
         User owner = getAuthenticatedUser();
-        List<Group> groups = groupService.getGroupsByOwner(owner);
+
+        List<Group> groups = groupService.getGroupsByOwner(owner.getId());
+
         return new ResponseEntity<>(groups, HttpStatus.OK);
     }
 
     @GetMapping("/member")
     public ResponseEntity<List<Group>> getGroupsByMember() {
         User member = getAuthenticatedUser();
-        List<Group> groups = groupService.getGroupsByMember(member);
+
+        List<Group> groups = groupService.getGroupsByMember(member.getId());
+
         return new ResponseEntity<>(groups, HttpStatus.OK);
     }
 }

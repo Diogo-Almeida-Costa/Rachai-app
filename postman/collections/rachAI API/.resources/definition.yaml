@@ -1,0 +1,11 @@
+$kind: collection
+description: Coleção de requisições para o projeto rachAI (Backend Spring Boot)
+variables:
+  base_url: http://localhost:8080
+  auth_token: ""
+auth:
+  - id: c03aa056-1f4f-41b1-ab48-6f3475741cf3
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{auth_token}}"
