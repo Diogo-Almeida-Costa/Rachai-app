@@ -1,7 +1,10 @@
 package com.rachai.api.controller;
 
+import com.rachai.api.dto.GroupSuggestionDTO;
+import com.rachai.api.exception.ResourceNotFoundException;
 import com.rachai.api.model.Group;
 import com.rachai.api.model.User;
+import com.rachai.api.service.AiGroupSuggestionService;
 import com.rachai.api.service.GroupService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +24,14 @@ public class GroupController {
     @Autowired
     private GroupService groupService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AiGroupSuggestionService aiGroupSuggestionService;
+
     private User getAuthenticatedUser() {
-       return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
     @RequestMapping(method = RequestMethod.POST , produces = MediaType.APPLICATION_JSON_VALUE)
@@ -97,5 +106,60 @@ public class GroupController {
         List<Group> groups = groupService.getGroupsByMember(member.getId());
 
         return new ResponseEntity<>(groups, HttpStatus.OK);
+    }
+
+    /**
+     * POST /api/groups/suggest
+     * Gera uma sugestão de grupo com IA baseada no histórico do usuário.
+     * Body (opcional): { "context": "viagem para a praia com os amigos" }
+     */
+    @PostMapping("/suggest")
+    public ResponseEntity<GroupSuggestionDTO> suggestGroup(@RequestBody(required = false) Map<String, String> body) {
+        User currentUser = getAuthenticatedUser();
+        List<Group> userGroups = groupService.getGroupsByMember(currentUser);
+        String context = body != null ? body.get("context") : null;
+
+        GroupSuggestionDTO suggestion = aiGroupSuggestionService.suggestGroup(currentUser, userGroups, context);
+        return ResponseEntity.ok(suggestion);
+    }
+
+    /**
+     * POST /api/groups/suggest/confirm
+     * Cria o grupo confirmado pelo usuário a partir de uma sugestão da IA.
+     * Body: { "name": "...", "description": "...", "memberIds": [1, 2, 3] }
+     */
+    @PostMapping("/suggest/confirm")
+    public ResponseEntity<Group> confirmSuggestedGroup(@RequestBody Map<String, Object> body) {
+        User owner = getAuthenticatedUser();
+
+        String name = body.containsKey("name")
+                ? (String) body.get("name")
+                : (String) body.get("suggestedName");
+
+        String description = body.containsKey("description")
+                ? (String) body.get("description")
+                : (String) body.get("suggestedDescription");
+
+        @SuppressWarnings("unchecked")
+        List<Integer> memberIds = body.containsKey("memberIds")
+                ? (List<Integer>) body.get("memberIds")
+                : (List<Integer>) body.get("suggestedMemberIds");
+
+        Group group = new Group();
+        group.setName(name);
+        group.setDescription(description);
+
+        Group createdGroup = groupService.createGroup(group, owner);
+
+        if (memberIds != null) {
+            for (Integer memberId : memberIds) {
+                userRepository.findById(Long.valueOf(memberId))
+                        .ifPresent(member -> groupService.addMemberToGroup(createdGroup.getId(), member));
+            }
+        }
+
+        Group finalGroup = groupService.getGroupById(createdGroup.getId())
+                .orElse(createdGroup);
+        return new ResponseEntity<>(finalGroup, HttpStatus.CREATED);
     }
 }
