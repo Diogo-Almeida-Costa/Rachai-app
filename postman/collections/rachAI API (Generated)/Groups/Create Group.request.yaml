@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{base_url}}/rachai/groups"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{auth_token}}
+body:
+  type: text
+  content: |-
+    {
+        "name": "Test Group",
+        "description": "A group for testing purposes."
+    }
+order: 1000

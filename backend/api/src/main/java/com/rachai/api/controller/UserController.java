@@ -33,10 +33,10 @@ public class UserController {
     }
 
     @RequestMapping(value = "/me" , method = RequestMethod.PUT , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<User> update(Authentication authentication, @RequestBody User user) {
+    public ResponseEntity<UserProfileDTO> update(Authentication authentication, @RequestBody User user) {
         String email = authentication.getName();
 
-        User updatedProfile = service.updateProfile(email , user);
+        UserProfileDTO updatedProfile = service.updateProfile(email , user);
 
         return ResponseEntity.ok(updatedProfile);
     }
@@ -46,17 +46,17 @@ public class UserController {
     public ResponseEntity<UserProfileDTO> showProfile(Authentication authentication) {
         String email = authentication.getName();
 
-        UserProfileDTO myProfile = service.findProfileByEmail(email);
-        
+        UserProfileDTO myProfile = service.findProfileByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Perfil não encontrado"));
+
         return ResponseEntity.ok(myProfile);
     }
-    // Endpoint dentro de User para adicionar amigo
+
+    
     @PostMapping("/{userId}/friends/{friendId}")
     public ResponseEntity<FriendshipDTO> addFriend(@PathVariable Long userId, @PathVariable Long friendId) {
         return ResponseEntity.ok(friendshipService.addFriend(userId, friendId));
     }
 
-    // Endpoint dentro de User para listar amigos
     @GetMapping("/{userId}/friends")
     public ResponseEntity<List<FriendshipDTO>> listFriends(@PathVariable Long userId) {
         return ResponseEntity.ok(friendshipService.listFriends(userId));

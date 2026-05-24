@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/rachai/debts/1/settle"
-method: PUT
-order: 3000

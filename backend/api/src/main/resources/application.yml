@@ -1,10 +1,7 @@
-# Nome da aplicação
+tabscanner:
+  api:
+    key: 
 spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    url: jdbc:mysql://localhost:3306/rachai_db?useSSL=false&serverTimezone=UTC
-    password: 
   jpa:
     open-in-view: 'false'
     database-platform: org.hibernate.dialect.MySQL8Dialect
@@ -14,5 +11,13 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: 'true'
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    url: jdbc:mysql://localhost:3306/rachai_db?useSSL=false&serverTimezone=UTC
+    password: 
   application:
     name: rachai-api
+groq:
+  api:
+    key:

@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/rachai/groups/suggest"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{auth_token}}
+body:
+  type: text
+  content: |-
+    {
+        "context": "viagem para a praia com os amigos"
+    }
+order: 10000

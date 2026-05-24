@@ -25,6 +25,9 @@ public class DebtController {
     @Autowired
     private DebtService debtService;
 
+    @Autowired
+    private TabscannerService tabscannerService;
+
     @RequestMapping(value = "/group/{groupId}/calculate" , method = RequestMethod.POST , produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Debt>> calculateDebts(@PathVariable Long groupId) {
         List<Debt> debts = debtService.calculateAndSimplifyDebts(groupId);
@@ -45,7 +48,6 @@ public class DebtController {
 
     @PostMapping("/process-invoice")
     public ResponseEntity<?> processInvoice(@RequestParam("file") MultipartFile file) throws InterruptedException {
-        // 1. Chama o módulo do Tabscanner que você acabou de criar
         TabscannerResponseDTO initialResponse = tabscannerService.processReceipt(file);
         String token = tabscannerService.extractToken(initialResponse);
 
@@ -56,6 +58,7 @@ public class DebtController {
         if (finalResult != null && finalResult.getResult() != null) {
             return ResponseEntity.ok(finalResult.getResult().getLineItems());
         }
+        
         return ResponseEntity.ok(finalResult);
     }
 }

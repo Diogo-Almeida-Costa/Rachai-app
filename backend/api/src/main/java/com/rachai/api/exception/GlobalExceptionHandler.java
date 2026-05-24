@@ -11,6 +11,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String message) {
         ErrorResponse error = new ErrorResponse(status.value(), message, LocalDateTime.now());
+
         return ResponseEntity.status(status).body(error);
     }
 
@@ -44,6 +45,28 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
     }
 
-    public record ErrorResponse(int status, String message, LocalDateTime timestamp) {
+    public static class ErrorResponse {
+
+        private int status;
+        private String message;
+        private LocalDateTime timestamp;
+
+        public ErrorResponse(int status, String message, LocalDateTime timestamp) {
+            this.status = status;
+            this.message = message;
+            this.timestamp = timestamp;
+        }
+
+        public int getStatus() {
+            return status;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public LocalDateTime getTimestamp() {
+            return timestamp;
+        }
     }
 }

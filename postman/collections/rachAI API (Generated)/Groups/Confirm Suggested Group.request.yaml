@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/rachai/groups/suggest/confirm"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{auth_token}}
+body:
+  type: text
+  content: |-
+    {
+        "name": "Suggested Group Name",
+        "description": "Suggested Group Description",
+        "memberIds": [1, 2]
+    }
+order: 11000

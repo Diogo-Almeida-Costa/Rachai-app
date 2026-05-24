@@ -11,10 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 @Service
 public class UserService {
@@ -22,7 +22,10 @@ public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class) ;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserRepository repository;
+
+    @Autowired
+    private FriendshipRepository friendshipRepository;
 
     public List<User> findAll() {
         logger.info("Finding All Users!");
@@ -30,43 +33,40 @@ public class UserService {
     }
 
     public Optional<UserProfileDTO> findProfileById(Long id) {
-        return userRepository.findById(id)
-                .map(user -> new UserProfileDTO(user.getName(), user.getEmail(), user.getImageUrl(), user.getBio()));
+        return repository.findById(id).map(user -> new UserProfileDTO(user.getFirstName(), user.getLastName(), user.getEmail(), user.getImageUrl(), user.getBio()));
     }
 
-    public User updateProfile(String email , User user) {
-        logger.info("Updating the profile with ID: {} and name {} {}" , user.getId() , user.getFirstName(), user.getLastName());
+    public UserProfileDTO updateProfile(String email, User user) {
+        logger.info("Updating profile for email: {}", email);
         User entity = repository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("There's no user with this email"));
 
-        user.setName(updateData.getName());
-        user.setImageUrl(updateData.getImageUrl());
-        user.setBio(updateData.getBio());
+        entity.setFirstName(user.getFirstName());
+        entity.setLastName(user.getLastName());
+        entity.setImageUrl(user.getImageUrl());
+        entity.setBio(user.getBio());
 
-        User updatedUser = userRepository.save(user);
+        User updatedUser = repository.save(entity);
 
-        return new UserProfileDTO(updatedUser.getName(), updatedUser.getEmail(), updatedUser.getImageUrl(),
-                updatedUser.getBio());
+        return new UserProfileDTO(updatedUser.getFirstName(), updatedUser.getLastName(), updatedUser.getEmail(), updatedUser.getImageUrl(), updatedUser.getBio());
     }
 
     public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email);
+        return repository.findByEmail(email);
     }
 
     public Optional<UserProfileDTO> findProfileByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .map(user -> new UserProfileDTO(user.getName(), user.getEmail(), user.getImageUrl(), user.getBio()));
+        return repository.findByEmail(email).map(user -> new UserProfileDTO(user.getFirstName(), user.getLastName(), user.getEmail(), user.getImageUrl(), user.getBio()));
     }
 
     public List<User> searchUsers(String query) {
-        return userRepository.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query);
+        return repository.findByFirstNameContainingIgnoreCaseOrEmailContainingIgnoreCase(query, query);
     }
 
     public void addFriend(User user, Long friendId) {
-        User friend = userRepository.findById(friendId)
-                .orElseThrow(() -> new ResourceNotFoundException("Amigo não encontrado"));
+        User friend = repository.findById(friendId).orElseThrow(() -> new ResourceNotFoundException("Amigo não encontrado"));
 
         if (!friendshipRepository.existsByUserAndFriend(user, friend)) {
-            Friendship friendship = new Friendship(null, user, friend);
+            Friendship friendship = new Friendship(user, friend);
             friendshipRepository.save(friendship);
         }
     }

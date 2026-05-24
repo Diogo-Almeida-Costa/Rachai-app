@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/rachai/groups/1/memmbers/2"
-method: POST
-order: 6000

@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/rachai/expenses/{{expenseId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{auth_token}}
+body:
+  type: text
+  content: |-
+    {
+        "description": "Updated Dinner with friends",
+        "amount": 60.00,
+        "groupId": {{groupId}},
+        "paidByUserId": {{userId}},
+        "involvedUserIds": [{{userId}}, {{friendId}}]
+    }
+order: 4000

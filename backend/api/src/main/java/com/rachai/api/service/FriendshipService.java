@@ -28,35 +28,29 @@ public class FriendshipService {
             throw new IllegalArgumentException("Você não pode adicionar a si mesmo.");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
-        User friend = userRepository.findById(friendId)
-                .orElseThrow(() -> new ResourceNotFoundException("Amigo não encontrado"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
-        // Evita duplicados
+        User friend = userRepository.findById(friendId).orElseThrow(() -> new ResourceNotFoundException("Amigo não encontrado"));
+
         if (friendshipRepository.existsByUserAndFriend(user, friend)) {
             throw new IllegalStateException("Vocês já são amigos.");
         }
 
-        Friendship friendship = new Friendship(null, user, friend);
+        Friendship friendship = new Friendship (user, friend);
         Friendship saved = friendshipRepository.save(friendship);
 
         return convertToDTO(saved);
     }
 
     public List<FriendshipDTO> listFriends(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
         
-        return friendshipRepository.findByUser(user).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return friendshipRepository.findByUser(user).stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Transactional
     public void removeFriend(Long userId, Long friendId) {
-        // Lógica para deletar a amizade
-        // friendshipRepository.deleteByUserAndFriendId(userId, friendId);
+        friendshipRepository.deleteByUserAndFriendId(userId, friendId);
     }
 
     private FriendshipDTO convertToDTO(Friendship friendship) {
@@ -64,7 +58,7 @@ public class FriendshipService {
                 friendship.getId(),
                 friendship.getUser().getId(),
                 friendship.getFriend().getId(),
-                friendship.getFriend().getName(),
+                friendship.getFriend().getFirstName(),
                 friendship.getFriend().getEmail(),
                 friendship.getFriend().getImageUrl()
         );

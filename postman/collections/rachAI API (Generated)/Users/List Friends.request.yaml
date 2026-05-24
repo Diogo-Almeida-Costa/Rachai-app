@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/rachai/users/{{userId}}/friends"
+method: GET
+headers:
+  Authorization: Bearer {{auth_token}}
+order: 5000

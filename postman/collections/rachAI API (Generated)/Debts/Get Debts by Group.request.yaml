@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{base_url}}/rachai/debts/group/{{groupId}}"
+method: GET
+headers:
+  Authorization: Bearer {{auth_token}}
+order: 2000

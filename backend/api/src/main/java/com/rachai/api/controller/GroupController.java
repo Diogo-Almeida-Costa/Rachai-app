@@ -1,11 +1,12 @@
 package com.rachai.api.controller;
 
 import com.rachai.api.dto.GroupSuggestionDTO;
-import com.rachai.api.exception.ResourceNotFoundException;
 import com.rachai.api.model.Group;
 import com.rachai.api.model.User;
 import com.rachai.api.service.AiGroupSuggestionService;
 import com.rachai.api.service.GroupService;
+
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import org.springframework.http.MediaType;
+
+import com.rachai.api.repository.UserRepository;
 
 @RestController
 @RequestMapping("/rachai/groups")
@@ -116,7 +119,7 @@ public class GroupController {
     @PostMapping("/suggest")
     public ResponseEntity<GroupSuggestionDTO> suggestGroup(@RequestBody(required = false) Map<String, String> body) {
         User currentUser = getAuthenticatedUser();
-        List<Group> userGroups = groupService.getGroupsByMember(currentUser);
+        List<Group> userGroups = groupService.getGroupsByMember(currentUser.getId());
         String context = body != null ? body.get("context") : null;
 
         GroupSuggestionDTO suggestion = aiGroupSuggestionService.suggestGroup(currentUser, userGroups, context);
@@ -149,17 +152,15 @@ public class GroupController {
         group.setName(name);
         group.setDescription(description);
 
-        Group createdGroup = groupService.createGroup(group, owner);
+        Group createdGroup = groupService.createGroup(group, owner.getId());
 
         if (memberIds != null) {
             for (Integer memberId : memberIds) {
-                userRepository.findById(Long.valueOf(memberId))
-                        .ifPresent(member -> groupService.addMemberToGroup(createdGroup.getId(), member));
+                userRepository.findById(Long.valueOf(memberId)).ifPresent(member -> groupService.addMemberToGroup(createdGroup.getId(), member.getId()));
             }
         }
 
-        Group finalGroup = groupService.getGroupById(createdGroup.getId())
-                .orElse(createdGroup);
+        Group finalGroup = groupService.getGroupById(createdGroup.getId());
         return new ResponseEntity<>(finalGroup, HttpStatus.CREATED);
     }
 }

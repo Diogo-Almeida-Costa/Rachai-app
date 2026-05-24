@@ -1,0 +1,21 @@
+$kind: collection
+variables:
+  base_url: http://localhost:8080
+  auth_token: ""
+  userId: ""
+  friendId: ""
+  groupId: ""
+  expenseId: ""
+  debtId: ""
+scripts:
+  - type: http:beforeRequest
+    code: // This script runs before every request. You can add common setup here.
+    language: text/javascript
+  - type: http:afterResponse
+    code: |-
+      // This script runs after every response. You can add common tests here.
+      // Example: Check if the response status code is 200 OK
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+    language: text/javascript
