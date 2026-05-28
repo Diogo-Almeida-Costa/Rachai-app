@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/rachai/debts/group/{{groupId}}/calculate"
-method: POST
-headers:
-  Authorization: Bearer {{auth_token}}
-order: 1000

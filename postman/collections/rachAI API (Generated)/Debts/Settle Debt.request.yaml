@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{base_url}}/rachai/debts/{{debtId}}/settle"
-method: PUT
-headers:
-  Authorization: Bearer {{auth_token}}
-order: 3000

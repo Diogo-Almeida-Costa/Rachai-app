@@ -1,96 +1,70 @@
 package com.rachai.api.model;
 
 import javax.persistence.*;
-
+import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Entity
-@Table(name = "expenses")
+@Table(name = "tb_expenses")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Expense {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false , length = 300)
+    @Column(nullable = false, length = 300)
     private String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payer_id", nullable = false)
     private User payer;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)
     private Group group;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ExpenseSplit> splits = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Expense(Long id, String description, BigDecimal amount, User payer, Group group, LocalDateTime createdAt) {
-        this.id = id;
-        this.description = description;
-        this.amount = amount;
-        this.payer = payer;
-        this.group = group;
-        this.createdAt = createdAt;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Expense expense = (Expense) o;
+        return Objects.equals(id, expense.id);
     }
 
-    public Expense() {
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
-    public Long getId() {
-        return id;
+    //Métodos Auxiliares para gerenciar os splits
+    public void addSplit(ExpenseSplit split) {
+        this.splits.add(split);
+        split.setExpense(this);
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public User getPayer() {
-        return payer;
-    }
-
-    public void setPayer(User payer) {
-        this.payer = payer;
-    }
-
-    public Group getGroup() {
-        return group;
-    }
-
-    public void setGroup(Group group) {
-        this.group = group;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void removeSplit(ExpenseSplit split) {
+        this.splits.remove(split);
+        split.setExpense(null);
     }
 }

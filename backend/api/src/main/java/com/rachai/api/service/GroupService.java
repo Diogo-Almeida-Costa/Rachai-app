@@ -1,20 +1,22 @@
 package com.rachai.api.service;
 
-import com.rachai.api.exception.ResourceNotFoundException;
-import com.rachai.api.model.Group;
-import com.rachai.api.model.User;
-import com.rachai.api.repository.GroupRepository;
-import com.rachai.api.repository.UserRepository;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.rachai.api.dto.groupDTOs.GroupRequestDTO;
+import com.rachai.api.dto.groupDTOs.GroupResponseDTO;
 import com.rachai.api.exception.BusinessException;
+import com.rachai.api.exception.ResourceNotFoundException;
+import com.rachai.api.mapper.DozerMapper;
+import com.rachai.api.model.Group;
+import com.rachai.api.model.User;
+import com.rachai.api.repository.GroupRepository;
+import com.rachai.api.repository.UserRepository;
 
 
 @Service
@@ -28,95 +30,150 @@ public class GroupService{
 
     private static final Logger logger = LoggerFactory.getLogger(GroupService.class);
 
-    public Group createGroup(Group group, Long ownerId) {
-        logger.info("Creating Group!");
+    //OK
+    @Transactional
+    public GroupResponseDTO createGroup(GroupRequestDTO dto, Long ownerId) {
+        logger.info("Attempting to create group with name: '{}' for owner ID: {}", dto.getName(), ownerId);
 
         User owner = userRepository.findById(ownerId).orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
 
+        Group group = DozerMapper.parseObject(dto, Group.class);
+        
         group.setOwner(owner);
-        group.getMembers().add(owner);
-        return groupRepository.save(group);
+        group.addMember(owner);
+
+        Group savedGroup = groupRepository.save(group);
+
+        return DozerMapper.parseObject(savedGroup, GroupResponseDTO.class);
     }
 
-    public Group getGroupById(Long id) {
-        logger.info("Searching Group by Id");
+    //OK
+    @Transactional(readOnly = true)
+    public GroupResponseDTO getGroupById(Long id) {
+        logger.info("Attempting to find group by ID: {}", id);
 
-        return groupRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No Groups were found for this ID"));
+        Group group = findGroupOrThrow(id);
+
+        return DozerMapper.parseObject(group, GroupResponseDTO.class);
     }
 
-    public List<Group> getAllGroups() {
-        logger.info("Finding All Groups!");
-
-        return groupRepository.findAll();
+    //OK
+    public List<GroupResponseDTO> getAllGroups() {
+        logger.info("Attempting to list all groups with details");
+        return groupRepository.findAllWithDetails().stream().map(group -> DozerMapper.parseObject(group, GroupResponseDTO.class)).toList();
     }
 
-    public Group updateGroup(Long id, Group group) {
-        logger.info("Updating Group with ID: {}", id);
+    //OK
+    @Transactional
+    public GroupResponseDTO updateGroup(Long id, GroupRequestDTO dto, Long authenticatedUserId) {
+        logger.info("User ID: {} is attempting to update group with ID: {}", authenticatedUserId, id);
 
-        Group entity = groupRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No Groups were found for this ID"));
-        entity.setName(group.getName());
-        entity.setDescription(group.getDescription());
+        Group entity = findGroupOrThrow(id);
 
-        return groupRepository.save(entity);
+        if (!entity.getOwner().getId().equals(authenticatedUserId)) {
+            logger.warn("Security alert: User ID: {} tried to update group ID: {} without ownership permission!", authenticatedUserId, id);
+            throw new IllegalStateException("Você não tem permissão para alterar este grupo, pois você não é o proprietário.");
+        }
+
+        DozerMapper.mergeObject(dto, entity);
+
+        Group updatedGroup = groupRepository.save(entity);
+
+        return DozerMapper.parseObject(updatedGroup, GroupResponseDTO.class);
     }
 
-    public void deleteGroup(Long id) {
-        logger.info("Removing Group with ID: {}" , id);
+    //OK
+    @Transactional
+    public void deleteGroup(Long id, Long authenticatedUserId) {
+        logger.info("User ID: {} is attempting to delete group with ID: {}", authenticatedUserId, id);
 
-        Group entity = groupRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No Groups were found for this ID"));
+        Group entity = findGroupOrThrow(id);
+
+        if (!entity.getOwner().getId().equals(authenticatedUserId)) {
+            logger.warn("Security alert: User ID: {} tried to delete group ID: {} without ownership permission!", authenticatedUserId, id);
+            throw new IllegalStateException("Você não tem permissão para deletar este grupo, pois você não é o proprietário.");
+        }
 
         groupRepository.delete(entity);
     }
 
-    public Group addMemberToGroup(Long groupId, Long memberId) {
-        logger.info("Adding member with Id: {} to Group {}" , memberId , groupId);
+    //OK
+    @Transactional
+    public GroupResponseDTO addMemberToGroup(Long groupId, Long memberId, Long authenticatedUserId) {
+        logger.info("User ID: {} is attempting to add member ID: {} to group ID: {}", authenticatedUserId, memberId, groupId);
 
-        Group entityGroup = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("No Groups were found for this ID"));
-
-        User entityMember = userRepository.findById(memberId).orElseThrow(() -> new ResourceNotFoundException("No Members were found for this ID"));
-
-        if(entityGroup.getMembers().contains(entityMember)) {
-            throw new BusinessException("User is already a member of this group");
-        }
+        Group group = findGroupOrThrow(groupId);
         
-        entityGroup.getMembers().add(entityMember);
+        User newMember = userRepository.findById(memberId).orElseThrow(() -> new ResourceNotFoundException("No users were found for this ID"));
 
-        return groupRepository.save(entityGroup);
+        if (!group.getOwner().getId().equals(authenticatedUserId)) {
+            logger.warn("Security alert: User ID: {} tried to add a member to group ID: {} without permission!", authenticatedUserId, groupId);
+            throw new IllegalStateException("Você não tem permissão para adicionar membros a este grupo, pois você não é o proprietário.");
+        }
+
+        if (group.getMembers().contains(newMember)) {
+            throw new BusinessException("This user is already a member of this group");
+        }
+
+        group.addMember(newMember);
+
+        Group updatedGroup = groupRepository.save(group);
+
+        return DozerMapper.parseObject(updatedGroup, GroupResponseDTO.class);
     }
 
-    public Group removeMemberFromGroup(Long groupId, Long memberId) {
-        logger.info("Removing member with Id: {} to Group {}" , memberId , groupId);
+    //OK
+    @Transactional
+    public GroupResponseDTO removeMemberFromGroup(Long groupId, Long memberId, Long authenticatedUserId) {
+        logger.info("User ID: {} is attempting to remove member ID: {} from group ID: {}", authenticatedUserId, memberId, groupId);
 
-        Group entityGroup = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("No Groups were found for this ID"));
-
-        User entityMember = userRepository.findById(memberId).orElseThrow(() -> new ResourceNotFoundException("No Members were found for this ID"));
+        Group group = findGroupOrThrow(groupId);
         
-        if(entityGroup.getOwner().getId().equals(memberId)) {
+        User memberToRemove = userRepository.findById(memberId).orElseThrow(() -> new ResourceNotFoundException("No users were found for this ID"));
+
+        boolean isOwner = group.getOwner().getId().equals(authenticatedUserId);
+        boolean isSelfRemoving = memberId.equals(authenticatedUserId);
+
+        if (!isOwner && !isSelfRemoving) {
+            logger.warn("Security alert: User ID: {} tried to remove member ID: {} from group ID: {} without permission!", authenticatedUserId, memberId, groupId);
+            throw new IllegalStateException("Você não tem permissão para remover este membro ou sair deste grupo.");
+        }
+
+        if (group.getOwner().getId().equals(memberId)) {
             throw new BusinessException("Owner cannot be removed from the group");
         }
 
-        if(!entityGroup.getMembers().contains(entityMember)) {
+        if (!group.getMembers().contains(memberToRemove)) {
             throw new BusinessException("User is not a member of this group");
         }
 
-        entityGroup.getMembers().remove(entityMember);
+        group.removeMember(memberToRemove);
 
-        return groupRepository.save(entityGroup);
+        Group updatedGroup = groupRepository.save(group);
+        return DozerMapper.parseObject(updatedGroup, GroupResponseDTO.class);
     }
 
-    public List<Group> getGroupsByOwner(Long ownerId) {
-        logger.info("Searching Groups by owner ID {}" , ownerId);
+    //OK
+    @Transactional(readOnly = true)
+    public List<GroupResponseDTO> getGroupsByOwner(Long ownerId) {
+        logger.info("Attempting to find groups by owner ID: {}", ownerId);
 
         User owner = userRepository.findById(ownerId).orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
 
-        return groupRepository.findByOwner(owner);
+        return groupRepository.findByOwner(owner).stream().map(group -> DozerMapper.parseObject(group, GroupResponseDTO.class)).toList();
     }
 
-    public List<Group> getGroupsByMember(Long memberId) {
-        logger.info("Searching Groups by member {}" , memberId);
+    @Transactional(readOnly = true)
+    public List<GroupResponseDTO> getGroupsByMember(Long memberId) {
+        logger.info("Attempting to find groups where user ID: {} is a member", memberId);
 
         User member = userRepository.findById(memberId).orElseThrow(() -> new ResourceNotFoundException("Member not found"));
 
-        return groupRepository.findByMembers(member);
+        return groupRepository.findByMembersContaining(member).stream().map(group -> DozerMapper.parseObject(group, GroupResponseDTO.class)).toList();
+    }
+
+    //Método auxiliar
+    private Group findGroupOrThrow(Long id) {
+        return groupRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No groups were found for this ID"));
     }
 }

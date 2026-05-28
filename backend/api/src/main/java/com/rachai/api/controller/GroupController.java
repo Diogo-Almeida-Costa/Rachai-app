@@ -1,13 +1,16 @@
 package com.rachai.api.controller;
 
 import com.rachai.api.dto.GroupSuggestionDTO;
+import com.rachai.api.dto.groupDTOs.GroupRequestDTO;
+import com.rachai.api.dto.groupDTOs.GroupResponseDTO;
 import com.rachai.api.model.Group;
 import com.rachai.api.model.User;
 import com.rachai.api.service.AiGroupSuggestionService;
 import com.rachai.api.service.GroupService;
+import com.rachai.api.repository.UserRepository;
 
-import java.util.Map;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +18,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-import org.springframework.http.MediaType;
-
-import com.rachai.api.repository.UserRepository;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/rachai/groups")
 public class GroupController {
+
+    private static final Logger logger = LoggerFactory.getLogger(GroupController.class);
 
     @Autowired
     private GroupService groupService;
@@ -37,130 +39,125 @@ public class GroupController {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    @RequestMapping(method = RequestMethod.POST , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Group> createGroup(@RequestBody Group group) {
-
+    @PostMapping
+    public ResponseEntity<GroupResponseDTO> createGroup(@RequestBody GroupRequestDTO dto) {
         User owner = getAuthenticatedUser();
-
-        Group createdGroup = groupService.createGroup(group, owner.getId());
-
-        return new ResponseEntity<>(createdGroup, HttpStatus.CREATED);
-    }
-
-    @RequestMapping(method = RequestMethod.GET , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Group>> getAllGroups() {
-
-        List<Group> groups = groupService.getAllGroups();
-
-        return new ResponseEntity<>(groups, HttpStatus.OK);
-    }
-
-    @RequestMapping(value = "/{id}" , method = RequestMethod.GET , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Group> getGroupById(@PathVariable Long id) {
-
-        Group group = groupService.getGroupById(id);
+        logger.info("HTTP POST request received to create group: {} by User ID: {}", dto.getName(), owner.getId());
         
-        return new ResponseEntity<>(group, HttpStatus.OK);
+        GroupResponseDTO createdGroup = groupService.createGroup(dto, owner.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdGroup);
     }
 
-    @RequestMapping(value = "/{id}" , method = RequestMethod.PUT , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Group> updateGroup(@PathVariable Long id, @RequestBody Group groupDetails) {
-
-        Group updatedGroup = groupService.updateGroup(id, groupDetails);
-
-        return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
+    @GetMapping
+    public ResponseEntity<List<GroupResponseDTO>> getAllGroups() {
+        logger.info("HTTP GET request received to fetch all available groups");
+        return ResponseEntity.ok(groupService.getAllGroups());
     }
 
-    @RequestMapping(value = "/{id}" , method = RequestMethod.DELETE , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HttpStatus> deleteGroup(@PathVariable Long id) {
-        groupService.deleteGroup(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<GroupResponseDTO> getGroupById(@PathVariable Long id) {
+        logger.info("HTTP GET request received for group ID: {}", id);
+        return ResponseEntity.ok(groupService.getGroupById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<GroupResponseDTO> updateGroup(@PathVariable Long id, @RequestBody GroupRequestDTO dto) {
+        User requester = getAuthenticatedUser();
+        logger.info("HTTP PUT request received to update group ID: {} by User ID: {}", id, requester.getId());
         
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        GroupResponseDTO updatedGroup = groupService.updateGroup(id, dto, requester.getId());
+        return ResponseEntity.ok(updatedGroup);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteGroup(@PathVariable Long id) {
+        User requester = getAuthenticatedUser();
+        logger.info("HTTP DELETE request received for group ID: {} by User ID: {}", id, requester.getId());
+        
+        groupService.deleteGroup(id, requester.getId());
+        return ResponseEntity.noContent().build();
+    }
+
 
     @PostMapping("/{groupId}/members/{memberId}")
-    public ResponseEntity<Group> addMemberToGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
-        Group updatedGroup = groupService.addMemberToGroup(groupId, memberId);
-
-        return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
+    public ResponseEntity<GroupResponseDTO> addMemberToGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
+        User requester = getAuthenticatedUser();
+        logger.info("User ID: {} is attempting to add Member ID: {} to group ID: {}", requester.getId(), memberId, groupId);
+        
+        GroupResponseDTO updatedGroup = groupService.addMemberToGroup(groupId, memberId, requester.getId());
+        return ResponseEntity.ok(updatedGroup);
     }
 
     @DeleteMapping("/{groupId}/members/{memberId}")
-    public ResponseEntity<Group> removeMemberFromGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
-
-        Group updatedGroup = groupService.removeMemberFromGroup(groupId, memberId);
+    public ResponseEntity<GroupResponseDTO> removeMemberFromGroup(@PathVariable Long groupId, @PathVariable Long memberId) {
+        User requester = getAuthenticatedUser();
+        logger.info("User ID: {} is attempting to remove Member ID: {} from group ID: {}", requester.getId(), memberId, groupId);
         
-        return new ResponseEntity<>(updatedGroup, HttpStatus.OK);
+        GroupResponseDTO updatedGroup = groupService.removeMemberFromGroup(groupId, memberId, requester.getId());
+        return ResponseEntity.ok(updatedGroup);
     }
 
     @GetMapping("/owner")
-    public ResponseEntity<List<Group>> getGroupsByOwner() {
+    public ResponseEntity<List<GroupResponseDTO>> getGroupsByOwner() {
         User owner = getAuthenticatedUser();
-
-        List<Group> groups = groupService.getGroupsByOwner(owner.getId());
-
-        return new ResponseEntity<>(groups, HttpStatus.OK);
+        logger.info("HTTP GET request received to list groups owned by user ID: {}", owner.getId());
+        return ResponseEntity.ok(groupService.getGroupsByOwner(owner.getId()));
     }
 
     @GetMapping("/member")
-    public ResponseEntity<List<Group>> getGroupsByMember() {
+    public ResponseEntity<List<GroupResponseDTO>> getGroupsByMember() {
         User member = getAuthenticatedUser();
-
-        List<Group> groups = groupService.getGroupsByMember(member.getId());
-
-        return new ResponseEntity<>(groups, HttpStatus.OK);
+        logger.info("HTTP GET request received to list groups where user ID: {} is a member", member.getId());
+        return ResponseEntity.ok(groupService.getGroupsByMember(member.getId()));
     }
 
-    /**
-     * POST /api/groups/suggest
-     * Gera uma sugestão de grupo com IA baseada no histórico do usuário.
-     * Body (opcional): { "context": "viagem para a praia com os amigos" }
-     */
     @PostMapping("/suggest")
     public ResponseEntity<GroupSuggestionDTO> suggestGroup(@RequestBody(required = false) Map<String, String> body) {
         User currentUser = getAuthenticatedUser();
-        List<Group> userGroups = groupService.getGroupsByMember(currentUser.getId());
         String context = body != null ? body.get("context") : null;
+        logger.info("HTTP POST request received for AI group suggestion with context: {}", context);
+
+        List<GroupResponseDTO> userGroupsResponse = groupService.getGroupsByMember(currentUser.getId());
+        
+        List<Group> userGroups = userGroupsResponse.stream().map(dto -> {
+            Group g = new Group();
+            g.setId(dto.getId());
+            g.setName(dto.getName());
+            g.setDescription(dto.getDescription());
+            return g;
+        }).toList();
 
         GroupSuggestionDTO suggestion = aiGroupSuggestionService.suggestGroup(currentUser, userGroups, context);
         return ResponseEntity.ok(suggestion);
     }
 
-    /**
-     * POST /api/groups/suggest/confirm
-     * Cria o grupo confirmado pelo usuário a partir de uma sugestão da IA.
-     * Body: { "name": "...", "description": "...", "memberIds": [1, 2, 3] }
-     */
+    @SuppressWarnings("unchecked")
     @PostMapping("/suggest/confirm")
-    public ResponseEntity<Group> confirmSuggestedGroup(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<GroupResponseDTO> confirmSuggestedGroup(@RequestBody Map<String, Object> body) {
         User owner = getAuthenticatedUser();
+        logger.info("HTTP POST request received to confirm AI suggested group for user ID: {}", owner.getId());
 
-        String name = body.containsKey("name")
-                ? (String) body.get("name")
-                : (String) body.get("suggestedName");
+        String name = body.containsKey("name") ? (String) body.get("name") : (String) body.get("suggestedName");
+        String description = body.containsKey("description") ? (String) body.get("description") : (String) body.get("suggestedDescription");
 
-        String description = body.containsKey("description")
-                ? (String) body.get("description")
-                : (String) body.get("suggestedDescription");
-
-        @SuppressWarnings("unchecked")
-        List<Integer> memberIds = body.containsKey("memberIds")
-                ? (List<Integer>) body.get("memberIds")
+        List<Integer> memberIds = body.containsKey("memberIds") 
+                ? (List<Integer>) body.get("memberIds") 
                 : (List<Integer>) body.get("suggestedMemberIds");
 
-        Group group = new Group();
-        group.setName(name);
-        group.setDescription(description);
 
-        Group createdGroup = groupService.createGroup(group, owner.getId());
+        GroupRequestDTO requestDto = new GroupRequestDTO();
+        requestDto.setName(name);
+        requestDto.setDescription(description);
+
+        GroupResponseDTO createdGroup = groupService.createGroup(requestDto, owner.getId());
 
         if (memberIds != null) {
             for (Integer memberId : memberIds) {
-                userRepository.findById(Long.valueOf(memberId)).ifPresent(member -> groupService.addMemberToGroup(createdGroup.getId(), member.getId()));
+                userRepository.findById(Long.valueOf(memberId))
+                        .ifPresent(member -> groupService.addMemberToGroup(createdGroup.getId(), member.getId(), owner.getId()));
             }
         }
 
-        Group finalGroup = groupService.getGroupById(createdGroup.getId());
-        return new ResponseEntity<>(finalGroup, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(groupService.getGroupById(createdGroup.getId()));
     }
 }

@@ -2,37 +2,37 @@ package com.rachai.api.model;
 
 import javax.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 @Entity
-@Table(name = "friendships")
+@Table(name = "tb_expense_splits")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Friendship {
+public class ExpenseSplit {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "expense_id", nullable = false)
+    private Expense expense;
 
-    @ManyToOne
-    @JoinColumn(name = "friend_id", nullable = false)
-    private User friend;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "debtor_id", nullable = false)
+    private User debtor;
 
-    public Friendship(User user, User friend) {
-        this.user = user;
-        this.friend = friend;
-    }
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal share;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Friendship that = (Friendship) o;
+        ExpenseSplit that = (ExpenseSplit) o;
         return Objects.equals(id, that.id);
     }
 

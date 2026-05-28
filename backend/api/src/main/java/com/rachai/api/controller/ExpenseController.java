@@ -2,57 +2,69 @@ package com.rachai.api.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
-import com.rachai.api.dto.ExpenseDTO;
-import com.rachai.api.model.Expense;
+import com.rachai.api.dto.expenseDTOs.ExpenseRequestDTO;
+import com.rachai.api.dto.expenseDTOs.ExpenseResponseDTO;
+import com.rachai.api.model.User;
 import com.rachai.api.service.ExpenseService;
 
 @RestController
 @RequestMapping("/rachai/expenses")
 public class ExpenseController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ExpenseController.class);
+
     @Autowired
     private ExpenseService expenseService;
 
-    @RequestMapping(method = RequestMethod.POST , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Expense> createExpense(@RequestBody ExpenseDTO expenseDTO) {
-        Expense createdExpense = expenseService.createExpense(expenseDTO);
-        return new ResponseEntity<>(createdExpense, HttpStatus.CREATED);
+    private User getAuthenticatedUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    @RequestMapping(value = "/group/{groupId}" , method = RequestMethod.GET , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Expense>> getExpensesByGroup(@PathVariable Long groupId) {
-        List<Expense> expenses = expenseService.getExpensesByGroup(groupId);
-        return new ResponseEntity<>(expenses, HttpStatus.OK);
+
+    @PostMapping
+    public ResponseEntity<ExpenseResponseDTO> createExpense(@RequestBody ExpenseRequestDTO expenseDTO) {
+        logger.info("HTTP POST request received to create expense: '{}'", expenseDTO.getDescription());
+        ExpenseResponseDTO createdExpense = expenseService.createExpense(expenseDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdExpense);
     }
 
-    @RequestMapping(value = "/{expenseId}" , method = RequestMethod.GET , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Expense> getExpenseById(@PathVariable Long expenseId) {
-        Expense expense = expenseService.getExpenseById(expenseId);
+    @GetMapping("/group/{groupId}")
+    public ResponseEntity<List<ExpenseResponseDTO>> getExpensesByGroup(@PathVariable Long groupId) {
+        logger.info("HTTP GET request received to fetch expenses for group ID: {}", groupId);
+        List<ExpenseResponseDTO> expenses = expenseService.getExpensesByGroup(groupId);
+        return ResponseEntity.ok(expenses);
+    }
 
+    @GetMapping("/{expenseId}")
+    public ResponseEntity<ExpenseResponseDTO> getExpenseById(@PathVariable Long expenseId) {
+        logger.info("HTTP GET request received for expense ID: {}", expenseId);
+        ExpenseResponseDTO expense = expenseService.getExpenseById(expenseId);
         return ResponseEntity.ok(expense);
     }
 
-    @RequestMapping(value = "/{expenseId}" , method = RequestMethod.PUT , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Expense> updateExpense(@PathVariable Long expenseId, @RequestBody ExpenseDTO dto) {
-        Expense updatedExpense = expenseService.updateExpense(expenseId, dto);
-
+    @PutMapping("/{expenseId}")
+    public ResponseEntity<ExpenseResponseDTO> updateExpense(@PathVariable Long expenseId, @RequestBody ExpenseRequestDTO dto) {
+        User requester = getAuthenticatedUser();
+        logger.info("HTTP PUT request received to update expense ID: {} by User ID: {}", expenseId, requester.getId());
+        
+        ExpenseResponseDTO updatedExpense = expenseService.updateExpense(expenseId, dto, requester.getId());
         return ResponseEntity.ok(updatedExpense);
     }
 
-    @RequestMapping(value = "/{expenseId}" , method = RequestMethod.DELETE , produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping("/{expenseId}")
     public ResponseEntity<Void> deleteExpense(@PathVariable Long expenseId) {
-        expenseService.deleteExpense(expenseId);
-
+        User requester = getAuthenticatedUser();
+        logger.info("HTTP DELETE request received for expense ID: {} by User ID: {}", expenseId, requester.getId());
+        
+        expenseService.deleteExpense(expenseId, requester.getId());
         return ResponseEntity.noContent().build();
     }
 }

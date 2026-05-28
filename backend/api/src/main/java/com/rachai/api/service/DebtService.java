@@ -1,25 +1,30 @@
 package com.rachai.api.service;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.rachai.api.dto.debtDTOs.DebtResponseDTO;
+import com.rachai.api.exception.BusinessException;
+import com.rachai.api.exception.ResourceNotFoundException;
+import com.rachai.api.mapper.DozerMapper;
 import com.rachai.api.model.Debt;
 import com.rachai.api.model.Expense;
+import com.rachai.api.model.ExpenseSplit;
 import com.rachai.api.model.Group;
 import com.rachai.api.model.User;
 import com.rachai.api.repository.DebtRepository;
 import com.rachai.api.repository.ExpenseRepository;
 import com.rachai.api.repository.GroupRepository;
-import com.rachai.api.exception.BusinessException;
-import com.rachai.api.exception.ResourceNotFoundException;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 public class DebtService {
@@ -35,31 +40,38 @@ public class DebtService {
 
     private static final Logger logger = LoggerFactory.getLogger(DebtService.class);
 
+    //OK
     @Transactional
-    public List<Debt> calculateAndSimplifyDebts(Long groupId) {
-        logger.info("Calculating debts for Group {}", groupId);
+    public List<DebtResponseDTO> calculateAndSimplifyDebts(Long groupId) {
+        logger.info("Attempting to calculate and simplify debts for group ID: {}", groupId);
+        
         Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         List<Expense> expenses = expenseRepository.findByGroupId(groupId);
         Set<User> members = group.getMembers();
         
-        if (members.isEmpty()) throw new BusinessException("Group has no members");
+        if (members.isEmpty()) {
+            throw new BusinessException("Group has no members");
+        }
 
-        // Calcular o saldo líquido de cada usuário
         Map<User, BigDecimal> balances = new HashMap<>();
         for (User member : members) {
             balances.put(member, BigDecimal.ZERO);
         }
 
         for (Expense expense : expenses) {
-            BigDecimal amount = expense.getAmount();
-            BigDecimal share = amount.divide(BigDecimal.valueOf(members.size()), 2, RoundingMode.HALF_UP);
-
             User payer = expense.getPayer();
+            BigDecimal amount = expense.getAmount();
+
             balances.put(payer, balances.get(payer).add(amount));
 
-            for (User member : members) {
-                balances.put(member, balances.get(member).subtract(share));
+            for (ExpenseSplit split : expense.getSplits()) {
+                User debtor = split.getDebtor();
+                BigDecimal share = split.getShare();
+
+                if (balances.containsKey(debtor)) {
+                    balances.put(debtor, balances.get(debtor).subtract(share));
+                }
             }
         }
 
@@ -69,7 +81,6 @@ public class DebtService {
             balances.put(sd.getCreditor(), balances.get(sd.getCreditor()).subtract(sd.getAmount()));
         }
 
-        // Separar credores e devedores
         List<UserBalance> creditors = new ArrayList<>();
         List<UserBalance> debtors = new ArrayList<>();
 
@@ -82,7 +93,6 @@ public class DebtService {
             }
         }
 
-        // Algoritmo de Simplificação
         List<Debt> simplifiedDebts = new ArrayList<>();
         int i = 0, j = 0;
         while (i < debtors.size() && j < creditors.size()) {
@@ -102,43 +112,51 @@ public class DebtService {
             debtor.balance = debtor.balance.subtract(amountToPay);
             creditor.balance = creditor.balance.subtract(amountToPay);
 
-            if (debtor.balance.compareTo(BigDecimal.ZERO) <= 0) {
-                i++;
-            }
-            if (creditor.balance.compareTo(BigDecimal.ZERO) <= 0) {
-                j++;
-            }
+            if (debtor.balance.compareTo(BigDecimal.ZERO) <= 0) i++;
+            if (creditor.balance.compareTo(BigDecimal.ZERO) <= 0) j++;
         }
 
-        // Salvar as novas dívidas
         debtRepository.deleteByGroupIdAndSettled(groupId, false);
-        return debtRepository.saveAll(simplifiedDebts);
+        List<Debt> savedDebts = debtRepository.saveAll(simplifiedDebts);
+
+        logger.info("Successfully generated {} simplified debts for group ID: {}", savedDebts.size(), groupId);
+
+
+        return savedDebts.stream().map(debt -> DozerMapper.parseObject(debt, DebtResponseDTO.class)).toList();
     }
 
-    public List<Debt> getDebtsByGroup(Long groupId) {
-        logger.info("Searching debts for Group {}", groupId);
+    //OK
+    @Transactional(readOnly = true)
+    public List<DebtResponseDTO> getDebtsByGroup(Long groupId) {
+        logger.info("Attempting to find debts for group ID: {}", groupId);
 
         groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
-        return debtRepository.findByGroupId(groupId);
+
+        return debtRepository.findByGroupId(groupId).stream().map(debt -> DozerMapper.parseObject(debt, DebtResponseDTO.class)).toList();
     }
 
     @Transactional
-    public Debt settleDebt(Long debtId) {
-        logger.info("Settling Debt {}", debtId);
-        Debt debt = debtRepository.findById(debtId).orElseThrow(() -> new ResourceNotFoundException("Debt not found"));
+    public DebtResponseDTO settleDebt(Long debtId, Long authenticatedUserId) {
+        logger.info("User ID: {} is attempting to settle debt ID: {}", authenticatedUserId, debtId);
 
-        if(debt.isSettled()) {
+        Debt debt = findDebtOrThrow(debtId);
+
+        if (!debt.getDebtor().getId().equals(authenticatedUserId)) {
+            logger.warn("Security alert: User ID: {} tried to settle debt ID: {} but is not the debtor!", authenticatedUserId, debtId);
+            throw new IllegalStateException("Você não tem permissão para quitar esta dívida, pois ela pertence a outro usuário.");
+        }
+
+        if (debt.isSettled()) {
             throw new BusinessException("Debt already settled");
         }
 
         debt.setSettled(true);
-        return debtRepository.save(debt);
-    }
-
-    @Transactional
-    public Debt save(Debt debt) {
-        return debtRepository.save(debt);
+        
+        Debt settledDebt = debtRepository.save(debt);
+        logger.info("Debt ID: {} successfully settled by debtor ID: {}", debtId, authenticatedUserId);
+        
+        return DozerMapper.parseObject(settledDebt, DebtResponseDTO.class);
     }
 
     private static class UserBalance {
@@ -149,5 +167,10 @@ public class DebtService {
             this.user = user;
             this.balance = balance;
         }
+    }
+
+    //Método auxiliar
+    private Debt findDebtOrThrow(Long debtId) {
+        return debtRepository.findById(debtId).orElseThrow(() -> new ResourceNotFoundException("Debt not found"));
     }
 }

@@ -1,15 +1,25 @@
 package com.rachai.api.service;
 
+import com.rachai.api.dto.userDTOs.UserResponseDTO;
 import com.rachai.api.exception.BusinessException;
-import com.rachai.api.exception.ResourceNotFoundException;
+import com.rachai.api.mapper.DozerMapper;
 import com.rachai.api.model.User;
 import com.rachai.api.repository.UserRepository;
 import com.rachai.api.security.JwtService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.rachai.api.dto.authenticationDTOs.RegisterRequestDTO;
 
 @Service
 public class AuthService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -17,34 +27,58 @@ public class AuthService {
     @Autowired
     private JwtService jwtService;
 
-    public String login(String email, String password) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        if (!user.getPassword().equals(password)) {
-            throw new BusinessException("Senha inválida");
+    public String login(String email, String password) {
+        logger.info("Authentication attempt for email: {}", email);
+
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    logger.warn("Authentication failed: email {} not found", email);
+                    return new BusinessException("E-mail ou senha inválidos");
+                });
+
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            logger.warn("Authentication failed: wrong password for email {}", email);
+            throw new BusinessException("E-mail ou senha inválidos");
         }
 
+        logger.info("User {} successfully authenticated", email);
         return jwtService.generateToken(email);
     }
 
-    public User register(User user) {
+    @Transactional
+    public UserResponseDTO register(RegisterRequestDTO dto) {
+        logger.info("Attempting to register a new user with email: {}", dto.getEmail());
 
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
             throw new BusinessException("Email é obrigatório");
         }
 
-        if (user.getPassword() == null || user.getPassword().isBlank()) {
+        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
             throw new BusinessException("Senha é obrigatória");
         }
 
-        if (user.getPassword().length() < 6) {
+        if (dto.getPassword().length() < 6) {
             throw new BusinessException("A senha deve conter pelo menos 6 caracteres");
         }
 
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+            logger.warn("Registration failed: email {} already taken", dto.getEmail());
             throw new BusinessException("Já existe um usuário com esse email");
         }
 
-        return userRepository.save(user);
+        User user = DozerMapper.parseObject(dto, User.class);
+        
+        String encryptedPassword = passwordEncoder.encode(dto.getPassword());
+        user.setPassword(encryptedPassword);
+
+        User savedUser = userRepository.save(user);
+        logger.info("User successfully registered with ID: {}", savedUser.getId());
+        
+        return DozerMapper.parseObject(savedUser, UserResponseDTO.class);
     }
 }

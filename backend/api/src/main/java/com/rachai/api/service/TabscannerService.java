@@ -3,21 +3,35 @@ package com.rachai.api.service;
 import com.rachai.api.client.TabscannerApiClient;
 import com.rachai.api.dto.TabscannerResponseDTO;
 import com.rachai.api.exception.BusinessException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+
 @Service
 public class TabscannerService {
+
+    private static final Logger logger = LoggerFactory.getLogger(TabscannerService.class);
 
     @Autowired
     private TabscannerApiClient tabscannerApiClient;
 
     public TabscannerResponseDTO processReceipt(MultipartFile file) {
+        logger.info("Attempting to upload and process receipt image via Tabscanner API");
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("Uploaded file cannot be empty");
+        }
         return tabscannerApiClient.processReceipt(file);
     }
 
     public TabscannerResponseDTO searchResult(String token) {
+        logger.info("Polling Tabscanner OCR result for token: {}", token);
+        if (token == null || token.isBlank()) {
+            throw new BusinessException("Token cannot be null or empty");
+        }
         return tabscannerApiClient.getResult(token);
     }
 
@@ -25,27 +39,39 @@ public class TabscannerService {
         if (response != null && response.getToken() != null) {
             return response.getToken();
         }
-        throw new BusinessException("Token não encontrado");
+        logger.error("Failed to extract token from Tabscanner response");
+        throw new BusinessException("Token não encontrado na resposta do scanner");
     }
 
     public void filterResponse(TabscannerResponseDTO dto) {
-        if (dto.getResult() == null || dto.getResult().getLineItems() == null) {
-            throw new BusinessException("Resultado ou itens não encontrados");
+        logger.info("Filtering and validating parsed line items from Tabscanner result");
+
+        if (dto == null || dto.getResult() == null || dto.getResult().getLineItems() == null) {
+            throw new BusinessException("Resultado ou itens não encontrados no cupom fiscal");
         }
 
         dto.getResult().getLineItems().forEach(item -> {
+            String itemDescription = (item.getDesc() != null) ? item.getDesc() : "Item Desconhecido";
 
             if (item.getQty() == null) {
-                throw new BusinessException("Quantidade não encontrada no item: " + item.getDesc());
+                throw new BusinessException("Quantidade não encontrada no item: " + itemDescription);
             }
 
-            double valor = Double.parseDouble(item.getQty().toString());
+            try {
+                BigDecimal quantity = new BigDecimal(item.getQty().toString());
 
-            if (valor <= 0) {
-                throw new BusinessException("Quantidade inválida para o item: " + item.getDesc());
+                if (quantity.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new BusinessException("Quantidade inválida para o item: " + itemDescription);
+                }
+
+                item.setQty(quantity);
+
+            } catch (NumberFormatException e) {
+                logger.error("Failed to parse quantity '{}' for item '{}'", item.getQty(), itemDescription);
+                throw new BusinessException("Erro de formato na quantidade do item: " + itemDescription);
             }
-
-            item.setQty(valor);
         });
+        
+        logger.info("Successfully validated {} items from receipt", dto.getResult().getLineItems().size());
     }
 }

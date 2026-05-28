@@ -1,75 +1,61 @@
 package com.rachai.api.model;
 
 import javax.persistence.*;
+import lombok.*;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "tb_groups")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Group {
+
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY) 
     private Long id;
 
-    @Column(name = "name" , nullable = false , length = 80)
+    @Column(name = "name", nullable = false, length = 80)
     private String name; 
 
     @Column(length = 300)
     private String description; 
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id") 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false) 
     private User owner;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    
+    @ManyToMany
     @JoinTable(
-        name = "group_members",
+        name = "group_members", 
         joinColumns = @JoinColumn(name = "group_id"), 
-        inverseJoinColumns = @JoinColumn(name = "user_id") 
+        inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> members = new HashSet<>(); 
 
-    // Construtor vazio
-    public Group() {}
-
-    // Getters e setters
-    public Long getId() {
-        return id;
+    
+    public void addMember(User user) {
+        this.members.add(user);
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void removeMember(User user) {
+        this.members.remove(user);
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Group group = (Group) o;
+        return Objects.equals(id, group.id);
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public User getOwner() {
-        return owner;
-    }
-
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
-    public Set<User> getMembers() {
-        return members;
-    }
-
-    public void setMembers(Set<User> members) {
-        this.members = members;
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }
