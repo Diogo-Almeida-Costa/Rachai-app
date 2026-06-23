@@ -4,7 +4,7 @@ import api from '../../services/api';
 import './Register.css';
 
 export function Register() {
-    const [form, setForm] = useState({ name: '', email: '', password: '', bio: '' });
+    const [form, setForm] = useState({firstName: '',lastName: '', email: '', password: '', bio: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
@@ -25,32 +25,32 @@ export function Register() {
 
     return (
         <div className="register-root">
-            <div className="register-left">
-                <div className="register-brand">
-                    <div className="login-logo-mark">%</div>
-                    <span className="login-logo-text">RachAI</span>
-                </div>
-                <p className="register-tagline">Divida tudo.<br/>Guarde o que importa.</p>
-                <div className="decor-circle c1" />
-                <div className="decor-circle c2" />
-            </div>
-            <div className="register-right">
+            <div className="register">
                 <div className="register-card animate-in">
                     <h2 className="login-title">Criar conta</h2>
                     <p className="login-sub">Grátis para sempre. Comece agora.</p>
                     {error && <div className="form-error">{error}</div>}
-                    <form onSubmit={handleRegister} className="login-form">
+                    <form onSubmit={handleRegister} className="register-form">
                         <div className="field-group">
-                            <label>Nome</label>
-                            <input
-                                placeholder="Seu nome"
-                                value={form.name}
-                                onChange={e => setForm({ ...form, name: e.target.value })}
+                            <label className="title-form"> Nome</label>
+                            <input className="test"
+                                placeholder="Nome"
+                                value={form.firstName}
+                                onChange={e => setForm({ ...form, firstName: e.target.value })}
                                 required
                             />
                         </div>
                         <div className="field-group">
-                            <label>E-mail</label>
+                            <label className="title-form">Sobrenome</label>
+                            <input
+                                placeholder="Sobrenome"
+                                value={form.lastName}
+                                onChange={e => setForm({ ...form, lastName: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="field-group">
+                            <label className="title-form">E-mail</label>
                             <input
                                 type="email"
                                 placeholder="voce@email.com"
@@ -60,8 +60,8 @@ export function Register() {
                             />
                         </div>
                         <div className="field-group">
-                            <label>Senha</label>
-                            <input
+                            <label className="title-form">Senha</label>
+                            <input 
                                 type="password"
                                 placeholder="Mínimo 6 caracteres"
                                 value={form.password}
@@ -74,12 +74,16 @@ export function Register() {
                             {loading ? <span className="spinner" /> : 'Criar conta'}
                         </button>
                     </form>
-                    <p className="login-footer">
+                    <p className="register-footer">
                         Já tem conta? <Link to="/">Entrar</Link>
                     </p>
                 </div>
             </div>
-        </div>
+
+            <div class="back">
+
+            </div>
+        </div>    
     );
 }
 export default Register;

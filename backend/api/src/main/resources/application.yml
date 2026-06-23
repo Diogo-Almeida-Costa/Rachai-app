@@ -3,7 +3,7 @@ tabscanner:
     key:
 security:
   jwt:
-    secret-key: 
+    secret-key: 9a4f632e22824707a72d7df7a36081ab23e595a81e374ff4820bc0a12e2764b8
 spring:
   application:
     name: rachai-api
@@ -17,7 +17,7 @@ spring:
       hibernate:
         format_sql: 'true'
   datasource:
-    password: abacate
+    password: Dev@Spring2026!
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     url: jdbc:mysql://localhost:3306/rachai_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC

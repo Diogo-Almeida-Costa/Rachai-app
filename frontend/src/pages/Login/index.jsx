@@ -49,9 +49,15 @@ export function Login() {
                         resolve para você.
                     </p>
                     
-                    {/* Substitua pelo seu SVG/Imagem do robô */}
+                    
                     <div className="login-illustration">
                          <img src="/public/robot.png" alt="RachAI Robot" />
+                    </div>
+
+                    <div className="login-bars">
+                        <div className="bar bar-1"></div>
+                        <div className="bar bar-2"></div>
+                        <div className="bar bar-3"></div>
                     </div>
                 </div>
             </div>
@@ -73,7 +79,7 @@ export function Login() {
                             <label>E-mail</label>
                             <div className="input-wrapper">
                                 <Mail className="input-icon" size={18} />
-                                <input
+                                <input className="placeholder"
                                     type="email"
                                     placeholder="exemplo@email.com"
                                     value={email}
@@ -87,7 +93,7 @@ export function Login() {
                             <label>Senha</label>
                             <div className="input-wrapper">
                                 <Lock className="input-icon" size={18} />
-                                <input
+                                <input className="placeholder"
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Sua senha"
                                     value={password}
