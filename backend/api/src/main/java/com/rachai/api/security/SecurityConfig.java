@@ -1,5 +1,7 @@
 package com.rachai.api.security;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,8 +19,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -33,7 +33,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // CORREÇÃO: Utilizando a nova API do Spring Security para Spring Boot 3
-            .authorizeHttpRequests(auth -> auth
+            .authorizeRequests(auth -> auth
                 .antMatchers("/rachai/auth/**").permitAll() // Libera rotas de login/registro
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Libera requisições de preflight do CORS
                 .anyRequest().authenticated() // Bloqueia todo o resto exigindo o Token JWT válido

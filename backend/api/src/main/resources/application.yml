@@ -17,10 +17,10 @@ spring:
       hibernate:
         format_sql: 'true'
   datasource:
-    password: 
+    password: abacate
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    url: jdbc:mysql://localhost:3306/rachai_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/rachai_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 groq:
   api:
     key: 
