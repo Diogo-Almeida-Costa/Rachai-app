@@ -1,4 +1,4 @@
-package com.rachai.api;
+package com.rachai;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
