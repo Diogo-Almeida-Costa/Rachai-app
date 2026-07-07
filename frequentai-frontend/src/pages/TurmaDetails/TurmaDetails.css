@@ -1,0 +1,197 @@
+.text-dim { color: var(--text-dim); font-size: 14px; }
+
+.back-link {
+  background: none;
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-bottom: 18px;
+  padding: 6px 0;
+}
+.back-link:hover { color: var(--text); }
+
+.turma-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.turma-header h1 { font-size: 26px; margin-bottom: 6px; }
+
+.dash-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.dash-sub { color: var(--text-dim); font-size: 14px; }
+
+.ai-panel {
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-glow);
+}
+.ai-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.ai-panel-header h3 { flex: 1; font-size: 15px; }
+.ai-badge {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #04191c;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 100px;
+}
+.ai-panel-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.ai-panel-desc code {
+  background: var(--surface2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.ai-prompt-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 340px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  font-family: 'DM Sans', monospace;
+}
+.btn-ai-go {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #04191c;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 20px;
+}
+.panel-title { font-size: 15px; margin-bottom: 16px; }
+
+.btn-ghost.sm {
+  padding: 7px 14px;
+  font-size: 12.5px;
+}
+
+.origem-row { margin-bottom: 10px; }
+.ai-observacao {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.risco-list { display: flex; flex-direction: column; gap: 6px; }
+.risco-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+}
+
+.registro-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.registro-form select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 14px;
+  min-width: 200px;
+}
+
+.presence-toggle {
+  display: flex;
+  gap: 6px;
+}
+.toggle-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+}
+.toggle-btn.active-green {
+  background: rgba(52,211,153,0.14);
+  border-color: var(--green);
+  color: var(--green);
+}
+.toggle-btn.active-red {
+  background: rgba(255,93,108,0.14);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.students-table { display: flex; flex-direction: column; gap: 2px; }
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr;
+  align-items: center;
+  padding: 10px 8px;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--border);
+}
+.table-head {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--border-hover);
+}
+
+.registros-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.registro-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+}
+.registro-data { color: var(--text-muted); font-size: 12.5px; min-width: 96px; }
+.registro-aluno { flex: 1; font-weight: 500; }

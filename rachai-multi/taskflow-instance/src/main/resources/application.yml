@@ -1,0 +1,23 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: taskflow-api
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
+security:
+  jwt:
+    secret-key: 'taskflowInstanceChaveSecretaSuperSegura2026CompiladorDestravado'
+
+tabscanner:
+  api:
+    key: 
+
+groq:
+  api:
+    key: 
+    model: llama-3.3-70b-versatile

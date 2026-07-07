@@ -1,0 +1,19 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: frequentai-api
+
+security:
+  jwt:
+    secret-key: 'frequenciaInstanceChaveSecretaSuperSegura2026CompiladorDestravado'
+
+tabscanner:
+  api:
+    key: ''
+
+groq:
+  api:
+    key: ${GROQ_API_KEY:}
+    model: llama-3.3-70b-versatile

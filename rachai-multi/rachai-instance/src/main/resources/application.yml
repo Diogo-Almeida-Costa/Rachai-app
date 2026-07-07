@@ -1,0 +1,33 @@
+server:
+  port: 8081
+ 
+tabscanner:
+  api:
+    key: 
+ 
+groq:
+  api:
+    key: 
+    model: llama-3.3-70b-versatile
+ 
+security:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY:rachaiInstanceChaveSecretaSuperSegura2026CompiladorDestravado}
+ 
+spring:
+  application:
+    name: rachai-api
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: 'true'
+    open-in-view: 'false'
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        format_sql: 'true'
+  datasource:
+    url: jdbc:mysql://localhost:3306/rachai_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
+    password: Diogo0104!
+    driver-class-name: com.mysql.cj.jdbc.Driver
